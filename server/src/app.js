@@ -19,6 +19,7 @@ import {
   documentsRoutes,
   consentsRoutes,
 } from './modules/records/records.routes.js';
+import aiRoutes from './modules/ai/ai.routes.js';
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use('/api/cases', casesRoutes);
 app.use('/api/records', recordsRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/consents', consentsRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Root API index
 app.get('/api', (req, res) => {
