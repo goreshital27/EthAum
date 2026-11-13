@@ -13,6 +13,12 @@ import providersRoutes from './modules/providers/providers.routes.js';
 import doctorsRoutes from './modules/providers/doctors.routes.js';
 import compareRoutes from './modules/providers/compare.routes.js';
 import packagesRoutes from './modules/packages/packages.routes.js';
+import casesRoutes from './modules/cases/cases.routes.js';
+import {
+  recordsRoutes,
+  documentsRoutes,
+  consentsRoutes,
+} from './modules/records/records.routes.js';
 
 const app = express();
 
@@ -73,6 +79,12 @@ app.use('/api/hospitals', providersRoutes);
 app.use('/api/doctors', doctorsRoutes);
 app.use('/api/compare', compareRoutes);
 app.use('/api/packages', packagesRoutes);
+
+// Patient & Clinical Protected Routes
+app.use('/api/cases', casesRoutes);
+app.use('/api/records', recordsRoutes);
+app.use('/api/documents', documentsRoutes);
+app.use('/api/consents', consentsRoutes);
 
 // Root API index
 app.get('/api', (req, res) => {

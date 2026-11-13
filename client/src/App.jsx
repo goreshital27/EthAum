@@ -15,6 +15,8 @@ import Compare from './pages/Compare';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PatientDashboard from './pages/PatientDashboard';
+import NewCase from './pages/patient/NewCase';
+import CaseDetail from './pages/patient/CaseDetail';
 import HospitalDashboard from './pages/HospitalDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -39,7 +41,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected Dashboard Routes */}
+          {/* Protected Patient Routes */}
           <Route
             path="/patient"
             element={
@@ -48,6 +50,24 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/patient/cases/new"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <NewCase />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/cases/:id"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <CaseDetail />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Other Protected Dashboard Routes */}
           <Route
             path="/hospital"
             element={

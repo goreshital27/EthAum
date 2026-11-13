@@ -1,11 +1,60 @@
 import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { HeartPulse, LogOut, User, FileText, Compass, Clock } from 'lucide-react';
+import { formatCentsToUSD } from '../utils/currency';
+import AIDisclaimer from '../components/AIDisclaimer';
+import { STAGE_META } from '../components/StageTracker';
+import {
+  HeartPulse,
+  Plus,
+  FileSpreadsheet,
+  Calendar,
+  ShieldCheck,
+  Clock,
+  ArrowRight,
+  AlertCircle,
+  Building2,
+  FolderOpen,
+  MapPin,
+  CheckCircle2,
+  Activity,
+  LogOut,
+  User,
+} from 'lucide-react';
 
 export default function PatientDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch patient cases
+  const {
+    data: casesResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['patientCases'],
+    queryFn: async () => {
+      const res = await api.get('/cases');
+      return res.data?.data || [];
+    },
+  });
+
+  const cases = casesResponse || [];
+  const activeCase = cases.length > 0 ? cases[0] : null;
+
+  // Aggregate stats across cases
+  const totalQuotes = cases.reduce((acc, c) => acc + (c.quotesCount || 0), 0);
+  const totalAppointments = cases.reduce((acc, c) => acc + (c.appointmentsCount || 0), 0);
+  const totalAftercareTasks = cases.reduce((acc, c) => acc + (c.aftercareTasksCount || 0), 0);
+
+  // Active stage meta
+  const activeStageInfo = activeCase
+    ? STAGE_META.find((s) => s.key === activeCase.stage) || STAGE_META[0]
+    : null;
 
   const handleLogout = async () => {
     await logout();
@@ -13,111 +62,309 @@ export default function PatientDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+      {/* Patient Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <HeartPulse className="h-7 w-7 text-sky-600" />
-            <span className="text-xl font-bold text-slate-900 tracking-tight">EthAum</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <Link to="/" className="flex items-center space-x-2">
+              <HeartPulse className="h-7 w-7 text-teal-600" />
+              <span className="text-xl font-bold text-slate-900 tracking-tight">EthAum</span>
+            </Link>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200">
               Patient Portal
             </span>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-slate-900">{user?.name || user?.email}</p>
-              <p className="text-xs text-slate-500">{user?.email}</p>
+          <div className="flex items-center space-x-3">
+            <AIDisclaimer className="hidden md:inline-flex" />
+
+            <div className="text-right hidden sm:block pl-2 border-l border-slate-200">
+              <p className="text-xs font-bold text-slate-900">{user?.name || user?.email}</p>
+              <p className="text-[11px] text-slate-500">Verified Patient</p>
             </div>
+
             <button
               onClick={handleLogout}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+              title="Sign Out"
             >
               <LogOut className="h-3.5 w-3.5 text-slate-500" />
-              <span>Log out</span>
+              <span className="hidden sm:inline">Log out</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-sky-600 to-sky-700 rounded-xl p-6 text-white shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+        {/* Top Action Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Welcome back, {user?.name || 'Patient'}!</h1>
-            <p className="text-sky-100 text-sm mt-1">
-              Your international healthcare journey coordinator is ready.
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Welcome back, {user?.name || 'Patient'}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600">
+              Manage your healthcare inquiry, track hospital quotes, and access encrypted records.
             </p>
           </div>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
-            AI-assisted coordination, not medical advice
-          </span>
+
+          <Link
+            to="/patient/cases/new"
+            className="inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 shadow-sm transition-colors self-start sm:self-auto"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create New Case</span>
+          </Link>
         </div>
 
-        {/* Quick Stats / Journey steps placeholder */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start space-x-4">
-            <div className="p-3 bg-sky-50 text-sky-600 rounded-lg">
-              <FileText className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Medical Inquiries</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">0 Active Cases</p>
-              <p className="text-xs text-slate-400 mt-1">Start a case inquiry to match hospitals</p>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="space-y-6 animate-pulse">
+            <div className="h-48 bg-slate-200 rounded-2xl"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="h-28 bg-slate-200 rounded-xl"></div>
+              <div className="h-28 bg-slate-200 rounded-xl"></div>
+              <div className="h-28 bg-slate-200 rounded-xl"></div>
             </div>
           </div>
+        )}
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start space-x-4">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
-              <Compass className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Provider Network</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">Global Hospitals</p>
-              <p className="text-xs text-slate-400 mt-1">Accredited international facilities</p>
-            </div>
+        {/* Error State */}
+        {isError && (
+          <div className="bg-white p-8 rounded-xl border border-rose-200 text-center space-y-3">
+            <AlertCircle className="h-8 w-8 text-rose-500 mx-auto" />
+            <p className="text-sm font-semibold text-slate-800">Failed to load patient dashboard</p>
+            <p className="text-xs text-slate-500">{error?.message}</p>
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"
+            >
+              Try Again
+            </button>
           </div>
+        )}
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start space-x-4">
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-              <Clock className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Tele-consultations</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">None scheduled</p>
-              <p className="text-xs text-slate-400 mt-1">Appointments with hospital teams</p>
-            </div>
-          </div>
-        </div>
+        {!isLoading && !isError && (
+          <>
+            {/* Centerpiece: Big Current Stage Status */}
+            {activeCase ? (
+              <section className="bg-gradient-to-br from-teal-800 via-teal-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+                <div className="relative z-10 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-700/60 pb-3">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-teal-300">
+                      Active Medical Journey Status
+                    </span>
+                    <span className="text-xs bg-teal-700/50 text-teal-200 px-3 py-0.5 rounded-full border border-teal-600/40">
+                      Case #{activeCase.id.slice(0, 8)}
+                    </span>
+                  </div>
 
-        {/* Account Details Card */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <div className="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
-            <User className="h-5 w-5 text-slate-600" />
-            <h2 className="text-base font-semibold text-slate-800">Account Information</h2>
-          </div>
-          <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-            <div>
-              <dt className="text-xs text-slate-500">Account ID</dt>
-              <dd className="font-mono text-xs text-slate-700 mt-0.5 break-all">{user?.id}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-slate-500">Email</dt>
-              <dd className="font-medium text-slate-800 mt-0.5">{user?.email}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-slate-500">Account Role</dt>
-              <dd className="mt-0.5">
-                <span className="px-2 py-0.5 rounded text-xs font-semibold bg-sky-50 text-sky-700">
-                  {user?.role}
-                </span>
-              </dd>
-            </div>
-          </dl>
-        </div>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-2">
+                    <div className="space-y-2 max-w-2xl">
+                      <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-rose-500 text-white text-xs font-bold shadow-xs">
+                        <Activity className="h-3.5 w-3.5 animate-pulse" />
+                        <span>Current Stage: {activeStageInfo?.label}</span>
+                      </div>
+
+                      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                        {activeCase.treatment?.name || activeCase.treatmentNeed}
+                      </h2>
+
+                      <p className="text-xs sm:text-sm text-teal-100 leading-relaxed">
+                        {activeStageInfo?.desc}. Our care coordination team and partner medical specialists are reviewing your case data.
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-teal-200 pt-1">
+                        {activeCase.destination && (
+                          <div className="flex items-center space-x-1">
+                            <MapPin className="h-3.5 w-3.5 text-teal-400" />
+                            <span>Target: {activeCase.destination.country}</span>
+                          </div>
+                        )}
+                        {activeCase.budgetCents > 0 && (
+                          <div>Budget: {formatCentsToUSD(activeCase.budgetCents)}</div>
+                        )}
+                        <div>Created {new Date(activeCase.createdAt).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex flex-col gap-2">
+                      <Link
+                        to={`/patient/cases/${activeCase.id}`}
+                        className="inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-xs font-bold text-slate-900 bg-white hover:bg-teal-50 shadow-sm transition-colors"
+                      >
+                        <span>View Case Details</span>
+                        <ArrowRight className="h-4 w-4 text-teal-700" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : (
+              /* Empty case onboarding */
+              <section className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center space-y-4 shadow-sm">
+                <div className="p-4 bg-teal-50 rounded-full w-16 h-16 mx-auto flex items-center justify-center text-teal-700 border border-teal-200">
+                  <HeartPulse className="h-8 w-8" />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-xl font-bold text-slate-900">Start Your Medical Journey</h2>
+                  <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+                    You haven't initiated any medical inquiries yet. Create a case to upload records, get evaluated by accredited hospitals, and compare transparent quotes.
+                  </p>
+                </div>
+                <Link
+                  to="/patient/cases/new"
+                  className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 shadow-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Start New Case Inquiry</span>
+                </Link>
+              </section>
+            )}
+
+            {/* 3 Summary Cards: Quotes, Appointments, Aftercare Tasks */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* 1. Quotes Card */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <div className="p-2.5 rounded-lg bg-teal-50 text-teal-700">
+                    <FileSpreadsheet className="h-5 w-5" />
+                  </div>
+                  <span className="text-2xl font-extrabold text-slate-900">{totalQuotes}</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Hospital Quotes</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Detailed treatment plans and fixed cost estimates received from accredited hospitals.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-slate-100 text-[11px] font-semibold text-teal-700">
+                  {totalQuotes > 0 ? `${totalQuotes} ready to compare` : 'Pending hospital responses'}
+                </div>
+              </div>
+
+              {/* 2. Appointments Card */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <div className="p-2.5 rounded-lg bg-teal-50 text-teal-700">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <span className="text-2xl font-extrabold text-slate-900">{totalAppointments}</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Consultations</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Scheduled exploratory calls and pre-op consultations with chief surgeons.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-slate-100 text-[11px] font-semibold text-teal-700">
+                  {totalAppointments > 0 ? `${totalAppointments} consultation(s) arranged` : 'No upcoming calls scheduled'}
+                </div>
+              </div>
+
+              {/* 3. Aftercare Tasks Card */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <div className="p-2.5 rounded-lg bg-teal-50 text-teal-700">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <span className="text-2xl font-extrabold text-slate-900">{totalAftercareTasks}</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Aftercare Milestones</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Post-procedure recovery checkpoints and telemedicine follow-ups.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-slate-100 text-[11px] font-semibold text-teal-700">
+                  {totalAftercareTasks > 0 ? `${totalAftercareTasks} milestone(s) active` : 'Active during recovery phase'}
+                </div>
+              </div>
+            </section>
+
+            {/* List of My Cases */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center space-x-2">
+                  <FolderOpen className="h-5 w-5 text-teal-700" />
+                  <h2 className="text-base font-bold text-slate-900">My Medical Cases ({cases.length})</h2>
+                </div>
+                <Link
+                  to="/patient/cases/new"
+                  className="text-xs font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center space-x-1"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>New Case</span>
+                </Link>
+              </div>
+
+              {cases.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-500">
+                  No cases registered under this account.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                        <th className="pb-3">Procedure / Need</th>
+                        <th className="pb-3">Stage</th>
+                        <th className="pb-3">Destination</th>
+                        <th className="pb-3">Budget</th>
+                        <th className="pb-3">Quotes</th>
+                        <th className="pb-3">Documents</th>
+                        <th className="pb-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {cases.map((c) => (
+                        <tr key={c.id} className="hover:bg-slate-50/70">
+                          <td className="py-3.5 font-bold text-slate-900 max-w-[200px] truncate">
+                            {c.treatment?.name || c.treatmentNeed}
+                          </td>
+                          <td className="py-3.5">
+                            <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-teal-50 text-teal-800 border border-teal-200">
+                              {c.stage}
+                            </span>
+                          </td>
+                          <td className="py-3.5 text-slate-600">
+                            {c.destination?.country || 'Any Destination'}
+                          </td>
+                          <td className="py-3.5 font-semibold text-slate-800">
+                            {c.budgetCents ? formatCentsToUSD(c.budgetCents) : 'Flexible'}
+                          </td>
+                          <td className="py-3.5 text-slate-600">
+                            {c.quotesCount} quote{c.quotesCount === 1 ? '' : 's'}
+                          </td>
+                          <td className="py-3.5 text-slate-600">
+                            {c.documentsCount} record{c.documentsCount === 1 ? '' : 's'}
+                          </td>
+                          <td className="py-3.5 text-right">
+                            <Link
+                              to={`/patient/cases/${c.id}`}
+                              className="inline-flex items-center space-x-1 text-xs font-semibold text-teal-700 hover:text-teal-800"
+                            >
+                              <span>Manage</span>
+                              <ArrowRight className="h-3 w-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+        <p>EthAum &copy; {new Date().getFullYear()} - Care-coordination service &bull; In an emergency, contact your local emergency services.</p>
+        <p className="mt-1 text-slate-400">All medical files are encrypted and accessible strictly under explicit patient consent.</p>
+      </footer>
     </div>
   );
 }
