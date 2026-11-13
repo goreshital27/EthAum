@@ -10,6 +10,9 @@ import authRoutes from './modules/auth/auth.routes.js';
 import destinationsRoutes from './modules/destinations/destinations.routes.js';
 import treatmentsRoutes from './modules/treatments/treatments.routes.js';
 import providersRoutes from './modules/providers/providers.routes.js';
+import doctorsRoutes from './modules/providers/doctors.routes.js';
+import compareRoutes from './modules/providers/compare.routes.js';
+import packagesRoutes from './modules/packages/packages.routes.js';
 
 const app = express();
 
@@ -29,10 +32,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Global Rate Limiting
+// Global Rate Limiting (100 requests per 15 minutes per IP)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -67,6 +70,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationsRoutes);
 app.use('/api/treatments', treatmentsRoutes);
 app.use('/api/hospitals', providersRoutes);
+app.use('/api/doctors', doctorsRoutes);
+app.use('/api/compare', compareRoutes);
+app.use('/api/packages', packagesRoutes);
 
 // Root API index
 app.get('/api', (req, res) => {

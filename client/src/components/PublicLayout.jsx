@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { HeartPulse, Menu, X, LogIn, UserPlus, LogOut, User } from 'lucide-react';
+import { useCompare } from '../context/CompareContext';
+import CompareBar from './CompareBar';
+import { HeartPulse, Menu, X, LogIn, UserPlus, LogOut, User, Scale } from 'lucide-react';
 
 export default function PublicLayout() {
   const { user, logout } = useAuth();
+  const { selectedHospitals } = useCompare();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -36,7 +39,7 @@ export default function PublicLayout() {
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-7">
             <NavLink to="/treatments" className={navLinkClass}>
               Treatments
             </NavLink>
@@ -45,6 +48,19 @@ export default function PublicLayout() {
             </NavLink>
             <NavLink to="/hospitals" className={navLinkClass}>
               Hospitals
+            </NavLink>
+            <NavLink to="/packages" className={navLinkClass}>
+              Packages
+            </NavLink>
+            <NavLink to="/compare" className={navLinkClass}>
+              <span className="inline-flex items-center space-x-1">
+                <span>Compare</span>
+                {selectedHospitals.length > 0 && (
+                  <span className="px-1.5 py-0.2 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold">
+                    {selectedHospitals.length}
+                  </span>
+                )}
+              </span>
             </NavLink>
           </nav>
 
@@ -131,6 +147,25 @@ export default function PublicLayout() {
               >
                 Hospitals
               </Link>
+              <Link
+                to="/packages"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Packages
+              </Link>
+              <Link
+                to="/compare"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center justify-between"
+              >
+                <span>Compare Facilities</span>
+                {selectedHospitals.length > 0 && (
+                  <span className="px-2 py-0.5 bg-teal-100 text-teal-800 rounded-full text-xs font-bold">
+                    {selectedHospitals.length}
+                  </span>
+                )}
+              </Link>
             </div>
 
             <div className="pt-2 flex flex-col space-y-2">
@@ -149,16 +184,16 @@ export default function PublicLayout() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full text-center py-2 px-4 rounded-lg text-sm font-semibold bg-teal-50 text-teal-800"
                   >
-                    Go to Dashboard ({user.role})
+                    Dashboard ({user.role})
                   </Link>
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
                       handleLogout();
                     }}
-                    className="w-full text-center py-2 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100"
+                    className="w-full text-center py-2 px-4 rounded-lg text-sm font-medium text-slate-700 border border-slate-200"
                   >
-                    Log Out
+                    Sign Out
                   </button>
                 </>
               ) : (
@@ -166,14 +201,14 @@ export default function PublicLayout() {
                   <Link
                     to="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-center py-2 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700"
+                    className="text-center py-2 px-3 rounded-lg text-xs font-semibold text-slate-700 border border-slate-300"
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-center py-2 px-3 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700"
+                    className="text-center py-2 px-3 rounded-lg text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800"
                   >
                     Register
                   </Link>
@@ -184,83 +219,54 @@ export default function PublicLayout() {
         )}
       </header>
 
-      {/* Main Outlet */}
-      <main className="flex-1 w-full">
+      {/* Main Outlet for Child Routes */}
+      <main className="flex-1">
         <Outlet />
       </main>
 
+      {/* Sticky Bottom Compare Bar */}
+      <CompareBar />
+
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <footer className="border-t border-slate-200 bg-white pt-10 pb-8 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Col 1: Platform */}
-            <div className="md:col-span-2 space-y-3">
+            <div className="space-y-2 md:col-span-2">
               <div className="flex items-center space-x-2">
-                <HeartPulse className="h-6 w-6 text-teal-600" />
-                <span className="text-lg font-bold text-slate-900">EthAum</span>
+                <HeartPulse className="h-5 w-5 text-teal-600" />
+                <span className="font-bold text-slate-900 text-sm">EthAum Healthcare</span>
               </div>
-              <p className="text-sm text-slate-600 max-w-md leading-relaxed">
-                An AI-powered international healthcare marketplace coordinating medical travel, accredited hospital matching, transparent treatment packages, and post-operative aftercare.
+              <p className="text-slate-500 max-w-sm">
+                Empowering international patients with transparent pricing, accredited hospital networks, and end-to-end medical travel coordination.
               </p>
-              <div className="pt-1">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                  AI-assisted coordination, not medical advice
-                </span>
-              </div>
             </div>
 
-            {/* Col 2: Navigation */}
-            <div>
-              <p className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-3">
-                Explore
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li>
-                  <Link to="/treatments" className="hover:text-teal-700 transition-colors">
-                    Treatments & Procedures
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/destinations" className="hover:text-teal-700 transition-colors">
-                    Global Destinations
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/hospitals" className="hover:text-teal-700 transition-colors">
-                    Accredited Hospitals
-                  </Link>
-                </li>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-slate-900 text-xs uppercase tracking-wider">Explore</h4>
+              <ul className="space-y-1.5">
+                <li><Link to="/treatments" className="hover:text-teal-700">All Treatments</Link></li>
+                <li><Link to="/destinations" className="hover:text-teal-700">Accredited Destinations</Link></li>
+                <li><Link to="/hospitals" className="hover:text-teal-700">Approved Hospitals</Link></li>
+                <li><Link to="/packages" className="hover:text-teal-700">Treatment Packages</Link></li>
+                <li><Link to="/compare" className="hover:text-teal-700">Hospital Comparison</Link></li>
               </ul>
             </div>
 
-            {/* Col 3: Portal Access */}
-            <div>
-              <p className="text-xs font-semibold text-slate-900 uppercase tracking-wider mb-3">
-                Portals
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li>
-                  <Link to="/login" className="hover:text-teal-700 transition-colors">
-                    Patient Login
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/register" className="hover:text-teal-700 transition-colors">
-                    Hospital Registration
-                  </Link>
-                </li>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-slate-900 text-xs uppercase tracking-wider">Patient Portal</h4>
+              <ul className="space-y-1.5">
+                <li><Link to="/login" className="hover:text-teal-700">Patient Sign In</Link></li>
+                <li><Link to="/register" className="hover:text-teal-700">Create Free Account</Link></li>
               </ul>
             </div>
           </div>
 
-          {/* Mandatory Emergency Care Disclaimer */}
-          <div className="pt-6 border-t border-slate-200">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 leading-relaxed text-center sm:text-left">
-              <strong>Emergency Notice:</strong> EthAum is a care-coordination service. It is not an emergency or medical service. In an emergency, contact your local emergency services.
-            </div>
-
-            <p className="mt-4 text-center text-xs text-slate-400">
-              &copy; {new Date().getFullYear()} EthAum Marketplace. All rights reserved.
+          <div className="pt-6 border-t border-slate-200 space-y-2 text-center text-[11px] text-slate-500">
+            <p className="font-medium text-slate-600">
+              EthAum is a care-coordination service. It is not an emergency or medical service. In an emergency, contact your local emergency services.
+            </p>
+            <p className="text-slate-400">
+              AI-assisted coordination, not medical advice &bull; &copy; {new Date().getFullYear()} EthAum Global. All rights reserved.
             </p>
           </div>
         </div>
