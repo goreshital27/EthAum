@@ -7,6 +7,9 @@ import config from './config/index.js';
 import prisma from './config/prisma.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './modules/auth/auth.routes.js';
+import destinationsRoutes from './modules/destinations/destinations.routes.js';
+import treatmentsRoutes from './modules/treatments/treatments.routes.js';
+import providersRoutes from './modules/providers/providers.routes.js';
 
 const app = express();
 
@@ -59,6 +62,11 @@ app.get('/api/health', async (req, res) => {
 
 // Auth Routes: /api/auth/register, /api/auth/login, /api/auth/logout, /api/auth/me
 app.use('/api/auth', authRoutes);
+
+// Public Browse Routes (no login required)
+app.use('/api/destinations', destinationsRoutes);
+app.use('/api/treatments', treatmentsRoutes);
+app.use('/api/hospitals', providersRoutes);
 
 // Root API index
 app.get('/api', (req, res) => {
