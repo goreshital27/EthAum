@@ -16,10 +16,10 @@
 - Educational content that helps patients understand what to expect.
 
 **Weaknesses to IMPROVE:**
-- Acts as a directory only — no end-to-end booking or coordination.
-- No built-in quote comparison across hospitals.
-- No visible privacy policy for uploaded medical records.
-- Aftercare is left to the individual clinic; no platform-level follow-up.
+- Operates primarily as an informational directory — we did not find end-to-end booking or direct coordination on the public pages reviewed.
+- No built-in quote comparison across hospitals was found on the public pages reviewed.
+- We did not find a dedicated patient privacy dashboard or record access log on the public pages reviewed.
+- Aftercare appears to be left to the individual clinic; we did not find platform-managed aftercare workflows.
 - Testimonials are not verified against completed bookings.
 
 **Things to AVOID:**
@@ -30,7 +30,7 @@
 
 ## 2. PlacidWay (placidway.com)
 
-**What it does:** A global medical tourism marketplace connecting patients directly with clinics in 60+ countries. Operates a direct-to-provider model (not a broker). Serves self-paying patients seeking dental, bariatric, cosmetic, orthopaedic, and fertility treatments.
+**What it does:** A global medical tourism marketplace connecting patients directly with clinics in 60+ countries (unsourced). Operates a direct-to-provider model (not a broker). Serves self-paying patients seeking dental, bariatric, cosmetic, orthopaedic, and fertility treatments.
 
 **Patient journey:** Patient searches procedures and reviews clinic profiles with upfront pricing → submits a free quote request → clinic coordinator reviews records and schedules a virtual consultation → clinic sends a detailed treatment plan and quote → patient confirms appointment and pays a deposit directly to the clinic → travels (Booking.com integration for hotels) → treatment → leaves a review.
 
@@ -41,9 +41,9 @@
 - Booking.com integration for accommodation.
 
 **Weaknesses to IMPROVE:**
-- Quotes frequently exclude ancillary costs (flights, extended stay, medication). No all-in pricing.
-- No side-by-side quote comparison tool.
-- No clinical accountability — if something goes wrong, the patient must deal with the foreign clinic alone.
+- Quotes frequently exclude ancillary costs (flights, extended stay, medication); all-in pricing was not observed on public packages.
+- No side-by-side quote comparison tool was found on public pages.
+- Platform does not assume clinical liability — user reviews note patients must resolve issues directly with the foreign clinic.
 - Limited post-op support once the patient returns home.
 - Aggressive follow-up emails and calls after a quote request (reported in reviews).
 - Quality of partner clinics varies widely despite accreditation screening.
@@ -56,7 +56,7 @@
 
 ## 3. Medigo (medigo.com)
 
-**What it does:** Originally a Berlin-based "Booking.com for medical tourism" marketplace (founded 2013). Has since pivoted to enterprise-focused Third-Party Administrator (TPA) and concierge services for international insurance members. The consumer marketplace is no longer the primary product.
+**What it does:** Originally a Berlin-based "Booking.com for medical tourism" marketplace (founded 2013, unsourced). Has since pivoted to enterprise-focused Third-Party Administrator (TPA) and concierge services for international insurance members *(Verify before publishing)*. The consumer marketplace is no longer the primary product.
 
 **Patient journey (original model):** Patient searched procedures and compared accredited clinics → uploaded medical records → platform matched patient with specialists → received a treatment plan and cost estimate → platform coordinated visa, flights, transfers, interpreter → patient travelled and was treated → received discharge summary → remote follow-up.
 
@@ -66,10 +66,10 @@
 - Concierge-level logistics coordination (visa, flights, interpreter).
 
 **Weaknesses to IMPROVE:**
-- Consumer marketplace effectively shut down — shows the model is hard to sustain at scale.
+- Consumer marketplace appears to be de-emphasized or redirected toward B2B services.
 - Trustpilot reviews report patients feeling "ghosted" after returning home with complications.
-- Communication breakdowns between platform and clinics.
-- Accountability gap — platform is a tech/travel company, not a healthcare provider, with no legal liability for clinical outcomes.
+- Communication breakdowns between platform and clinics reported by reviewers.
+- Accountability limitations — as an intermediary platform, clinical care and liability reside with third-party providers.
 
 **Things to AVOID:**
 - Over-promising hands-on support that the platform cannot actually deliver post-treatment.
@@ -92,8 +92,8 @@
 
 **Weaknesses to IMPROVE:**
 - AI use is not clearly scoped — no visible disclaimer separating coordination AI from medical advice.
-- Reviews on the platform are not verified against completed bookings (not verified).
-- Record privacy and consent policies not prominently displayed.
+- Reviews on the platform were not verified against completed bookings on the public site (not verified).
+- Detailed patient record privacy dashboards and granular consent controls were not prominently displayed on public pages.
 - Aftercare coordination relies on the patient proactively using the app.
 
 **Things to AVOID:**
@@ -104,7 +104,7 @@
 
 ## 5. Apollo Hospitals International (apollohospitals.com)
 
-**What it does:** One of Asia's largest hospital groups, with JCI-accredited facilities across India. The International Patient Services (IPS) desk serves patients from 150+ countries seeking cardiology, oncology, orthopaedic, transplant, neuro, and fertility care.
+**What it does:** One of Asia's largest hospital groups, with JCI-accredited facilities across India. The International Patient Services (IPS) desk serves patients from 150+ countries (unsourced) seeking cardiology, oncology, orthopaedic, transplant, neuro, and fertility care.
 
 **Patient journey:** Patient contacts IPS via website or WhatsApp → submits medical reports online → specialist team reviews and sends treatment plan with cost estimate → Apollo issues visa recommendation letter → patient travels (airport pickup arranged) → assigned a relationship manager and interpreter → treated at the hospital → receives discharge summary → teleconsultation follow-ups after returning home.
 
@@ -115,11 +115,11 @@
 - Customised dietary and comfort arrangements for international patients.
 
 **Weaknesses to IMPROVE:**
-- Single-hospital system — patient cannot compare across competing hospitals on the same platform.
-- Pricing is available only after enquiry; no public cost estimator.
-- No referral or loyalty programme visible on the site.
-- Medical record handling policies not prominently explained to patients.
-- Review system is managed internally — no independent verification.
+- Single-hospital system — patients cannot compare competing hospital networks on the same portal.
+- Public cost estimator was not found on the international portal; pricing appears available upon enquiry.
+- We did not find a public referral or loyalty programme on the site.
+- Detailed patient-facing medical record access controls were not prominently displayed on public pages.
+- Review system is managed internally — no independent verification observed.
 
 **Things to AVOID:**
 - Presenting a single hospital's view as the only option (no competitive comparison).
@@ -138,10 +138,10 @@
 - Teleconsultation aftercare.
 
 **Weaknesses to IMPROVE:**
-- Single-hospital network — no cross-hospital comparison.
-- No public pricing or cost estimator; everything is quote-on-request.
-- No visible referral programme.
-- No patient-facing privacy dashboard for record access logs.
+- Single-hospital network — no cross-provider comparison available on the portal.
+- Public pricing calculators were not observed; quotes appear to be provided upon request.
+- We did not find a public referral programme on the site.
+- We did not find a patient-facing privacy dashboard or record access log on the public site.
 - Reviews are managed by the hospital, not independently verified.
 
 **Things to AVOID:**
@@ -151,22 +151,22 @@
 
 ## 7. Bumrungrad International Hospital (bumrungrad.com)
 
-**What it does:** A premier private hospital in Bangkok, Thailand, treating 500,000+ international patients per year from 190+ countries. Known for cardiology, orthopaedics, oncology, and wellness check-ups.
+**What it does:** A premier private hospital in Bangkok, Thailand, with a reported 500,000+ international patients per year from 190+ countries (unsourced). Known for cardiology, orthopaedics, oncology, and wellness check-ups.
 
-**Patient journey:** Patient contacts the hospital via website, email, or a global referral office → uploads medical history → specialist reviews and provides a cost estimate range → appointment scheduled before travel → visa and accommodation assistance → airport representative greets patient at Suvarnabhumi Airport → registration with free interpreter service (25+ languages) → consultation and same-day diagnostics → treatment in hotel-grade facilities → discharge with translated records → fitness-to-fly clearance → teleconsultation follow-ups from home.
+**Patient journey:** Patient contacts the hospital via website, email, or a global referral office → uploads medical history → specialist reviews and provides a cost estimate range → appointment scheduled before travel → visa and accommodation assistance → airport representative greets patient at Suvarnabhumi Airport → registration with free interpreter service (25+ languages, unsourced) → consultation and same-day diagnostics → treatment in hotel-grade facilities → discharge with translated records → fitness-to-fly clearance → teleconsultation follow-ups from home.
 
 **Strengths to ADAPT:**
 - Airport counter at Bangkok's main airport — physical presence builds trust.
-- Free interpreter service in 25+ languages.
+- Free interpreter service in 25+ languages (unsourced).
 - Same-day diagnostics with on-campus labs.
 - Discharge records translated into the patient's language.
 - Hotel-grade inpatient rooms reduce patient anxiety.
 
 **Weaknesses to IMPROVE:**
-- Single-hospital model — no marketplace or competitor comparison.
-- Cost estimate is a range, not a fixed quote; final price can change after in-person evaluation.
-- No visible consent-based record-sharing dashboard.
-- No referral programme visible on the site.
+- Single-hospital model — no cross-hospital marketplace comparison.
+- Cost estimates are typically provided as ranges rather than fixed, all-inclusive quotes; final price can change after in-person evaluation.
+- We did not find a visible consent-based record-sharing dashboard on the public site.
+- We did not find a public referral programme on the site.
 - Patient reviews are curated by the hospital.
 
 **Things to AVOID:**
@@ -187,7 +187,7 @@
 
 **Legend:** ✅ = clearly present, ⚠️ = partially present or with caveats, ❌ = absent or not found.
 
-> None of the platforms researched showed a visible, patient-facing medical record access log or a consent-based sharing dashboard.
+> We did not find a visible, patient-facing medical record access log or consent-based sharing dashboard on the public pages reviewed across any of these platforms.
 
 ---
 

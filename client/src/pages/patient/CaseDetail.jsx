@@ -139,6 +139,11 @@ export default function CaseDetail() {
     e.preventDefault();
     setUploadError('');
 
+    if (caseItem?.stage === 'CLOSED') {
+      setUploadError('This case is closed. New documents cannot be added.');
+      return;
+    }
+
     if (!selectedFile) {
       setUploadError('Please select a file to upload (PDF, JPG, or PNG up to 10MB).');
       return;
@@ -300,10 +305,16 @@ export default function CaseDetail() {
           )}
 
           {/* Upload Form Box */}
-          <form
-            onSubmit={handleUploadSubmit}
-            className="p-5 bg-teal-50/40 rounded-xl border border-teal-200/80 space-y-4"
-          >
+          {caseItem.stage === 'CLOSED' ? (
+            <div className="p-4 bg-slate-100/90 rounded-xl border border-slate-200 text-xs text-slate-700 flex items-center space-x-2">
+              <AlertCircle className="h-4 w-4 text-slate-500 shrink-0" />
+              <span className="font-medium">This case is closed. New documents cannot be added.</span>
+            </div>
+          ) : (
+            <form
+              onSubmit={handleUploadSubmit}
+              className="p-5 bg-teal-50/40 rounded-xl border border-teal-200/80 space-y-4"
+            >
             <h3 className="text-xs font-bold text-teal-900 uppercase tracking-wider flex items-center space-x-1.5">
               <UploadCloud className="h-4 w-4 text-teal-700" />
               <span>Upload New Medical Document</span>
@@ -388,6 +399,7 @@ export default function CaseDetail() {
               )}
             </button>
           </form>
+          )}
 
           {/* Documents Table */}
           {caseItem.documents?.length === 0 ? (

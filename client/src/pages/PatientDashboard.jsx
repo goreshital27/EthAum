@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
@@ -22,11 +22,14 @@ import {
   Activity,
   LogOut,
   User,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function PatientDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showPastCases, setShowPastCases] = useState(false);
 
   // Fetch patient cases
   const {
@@ -44,7 +47,9 @@ export default function PatientDashboard() {
   });
 
   const cases = casesResponse || [];
-  const activeCase = cases.length > 0 ? cases[0] : null;
+  const activeCases = cases.filter((c) => c.stage !== 'CLOSED');
+  const pastCases = cases.filter((c) => c.stage === 'CLOSED');
+  const activeCase = activeCases.length > 0 ? activeCases[0] : (cases[0] || null);
 
   // Aggregate stats across cases
   const totalQuotes = cases.reduce((acc, c) => acc + (c.quotesCount || 0), 0);
@@ -288,7 +293,7 @@ export default function PatientDashboard() {
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div className="flex items-center space-x-2">
                   <FolderOpen className="h-5 w-5 text-teal-700" />
-                  <h2 className="text-base font-bold text-slate-900">My Medical Cases ({cases.length})</h2>
+                  <h2 className="text-base font-bold text-slate-900">Active Cases ({activeCases.length})</h2>
                 </div>
                 <Link
                   to="/patient/cases/new"
@@ -299,13 +304,13 @@ export default function PatientDashboard() {
                 </Link>
               </div>
 
-              {cases.length === 0 ? (
+              {activeCases.length === 0 ? (
                 <div className="p-8 text-center text-xs text-slate-500">
-                  No cases registered under this account.
+                  No active cases at this time.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-xs min-w-[640px]">
                     <thead>
                       <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                         <th className="pb-3">Procedure / Need</th>
@@ -318,7 +323,7 @@ export default function PatientDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {cases.map((c) => (
+                      {activeCases.map((c) => (
                         <tr key={c.id} className="hover:bg-slate-50/70">
                           <td className="py-3.5 font-bold text-slate-900 max-w-[200px] truncate">
                             {c.treatment?.name || c.treatmentNeed}
@@ -355,6 +360,88 @@ export default function PatientDashboard() {
                   </table>
                 </div>
               )}
+
+              {/* Past cases section (collapsed by default) */}
+              <div className="pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowPastCases((prev) => !prev)}
+                  className="flex items-center justify-between w-full py-2 text-left text-xs font-semibold text-slate-600 hover:text-slate-900 focus:outline-hidden"
+                >
+                  <div className="flex items-center space-x-2">
+                    {showPastCases ? (
+                      <ChevronDown className="h-4 w-4 text-slate-500" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-slate-500" />
+                    )}
+                    <span>Past Cases ({pastCases.length})</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    {showPastCases ? 'Hide' : 'Show'}
+                  </span>
+                </button>
+
+                {showPastCases && (
+                  <div className="mt-3">
+                    {pastCases.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">
+                        No past (closed) cases.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs min-w-[640px]">
+                          <thead>
+                            <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                              <th className="pb-3">Procedure / Need</th>
+                              <th className="pb-3">Stage</th>
+                              <th className="pb-3">Destination</th>
+                              <th className="pb-3">Budget</th>
+                              <th className="pb-3">Quotes</th>
+                              <th className="pb-3">Documents</th>
+                              <th className="pb-3 text-right">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {pastCases.map((c) => (
+                              <tr key={c.id} className="hover:bg-slate-50/70 opacity-80">
+                                <td className="py-3.5 font-bold text-slate-700 max-w-[200px] truncate">
+                                  {c.treatment?.name || c.treatmentNeed}
+                                </td>
+                                <td className="py-3.5">
+                                  <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
+                                    {c.stage}
+                                  </span>
+                                </td>
+                                <td className="py-3.5 text-slate-600">
+                                  {c.destination?.country || 'Any Destination'}
+                                </td>
+                                <td className="py-3.5 font-semibold text-slate-800">
+                                  {c.budgetCents ? formatCentsToUSD(c.budgetCents) : 'Flexible'}
+                                </td>
+                                <td className="py-3.5 text-slate-600">
+                                  {c.quotesCount} quote{c.quotesCount === 1 ? '' : 's'}
+                                </td>
+                                <td className="py-3.5 text-slate-600">
+                                  {c.documentsCount} record{c.documentsCount === 1 ? '' : 's'}
+                                </td>
+                                <td className="py-3.5 text-right">
+                                  <Link
+                                    to={`/patient/cases/${c.id}`}
+                                    className="inline-flex items-center space-x-1 text-xs font-semibold text-slate-600 hover:text-teal-700"
+                                  >
+                                    <span>View</span>
+                                    <ArrowRight className="h-3 w-3" />
+                                  </Link>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </section>
           </>
         )}

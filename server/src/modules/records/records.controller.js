@@ -31,7 +31,7 @@ export const uploadCaseDocument = async (req, res, next) => {
     // 3. Verify case ownership
     const caseItem = await prisma.medicalCase.findUnique({
       where: { id: caseId },
-      select: { id: true, patientId: true, deletedAt: true },
+      select: { id: true, patientId: true, stage: true, deletedAt: true },
     });
 
     if (!caseItem || caseItem.deletedAt !== null) {
@@ -45,6 +45,14 @@ export const uploadCaseDocument = async (req, res, next) => {
       return res.status(403).json({
         status: 'fail',
         message: 'Access denied: You do not own this medical case',
+      });
+    }
+
+    // Block uploading documents to closed cases
+    if (caseItem.stage === 'CLOSED') {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'This case is closed. New documents cannot be added.',
       });
     }
 
