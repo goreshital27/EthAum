@@ -5,6 +5,7 @@ import api, { getFullFileUrl } from '../../api/axios';
 import { formatCentsToUSD } from '../../utils/currency';
 import StageTracker from '../../components/StageTracker';
 import AIDisclaimer from '../../components/AIDisclaimer';
+import AICoordinationPanel from '../../components/AICoordinationPanel';
 import {
   ArrowLeft,
   FileText,
@@ -270,6 +271,13 @@ export default function CaseDetail() {
 
         {/* Stage Tracker Pipeline */}
         <StageTracker currentStage={caseItem.stage} />
+
+        {/* AI Coordination & Provider Matching Panel */}
+        <AICoordinationPanel
+          caseId={caseItem.id}
+          caseStage={caseItem.stage}
+          approvedHospitals={approvedHospitals}
+        />
 
         {/* Document Records & Upload Section */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
