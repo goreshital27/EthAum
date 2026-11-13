@@ -1,33 +1,100 @@
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
+import prisma from '../config/prisma.js';
 
 /**
- * Authentication Middleware
+ * requireAuth Middleware
  *
  * Rules:
- * - JWT stored and read ONLY from httpOnly cookies, never localStorage.
- * - Extracts and verifies token; populates req.user.
+ * - Reads JWT exclusively from httpOnly cookie named "token".
+ * - Never reads from Authorization header or localStorage.
+ * - Verifies JWT signature and expiry.
+ * - Loads the full User entity from database with associated profiles.
+ * - Returns 401 if missing, invalid, expired, or user not found/inactive.
  */
-export const authenticate = (req, res, next) => {
+export const requireAuth = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
 
     if (!token) {
       return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Authentication token required',
+        status: 'error',
+        message: 'Authentication required',
       });
     }
 
-    const decoded = jwt.verify(token, config.JWT_SECRET);
-    req.user = decoded; // { id, role, email, ... }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, config.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Invalid or expired session token',
+      });
+    }
+
+    if (!decoded || !decoded.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Invalid session token payload',
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      include: {
+        patientProfile: true,
+        hospital: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'User account not found',
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Account is deactivated',
+      });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Invalid or expired session token',
-    });
+    next(error);
   }
 };
 
-export default authenticate;
+/**
+ * requireRole Middleware
+ *
+ * Rules:
+ * - Verifies the authenticated user has one of the required roles.
+ * - Returns 403 Forbidden if role does not match.
+ */
+export const requireRole = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required for role verification',
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Access forbidden: insufficient role permissions',
+      });
+    }
+
+    next();
+  };
+};
+
+export const authenticate = requireAuth;
+export default requireAuth;

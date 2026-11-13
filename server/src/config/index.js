@@ -4,22 +4,35 @@ import { z } from 'zod';
 // Load environment variables from .env
 dotenv.config();
 
-const envSchema = z.object({
-  PORT: z.string().default('5000').transform((val) => parseInt(val, 10)),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  CLIENT_URL: z.string().default('http://localhost:5173'),
-  DATABASE_URL: z.string().optional().default(''),
-  DIRECT_URL: z.string().optional().default(''),
-  JWT_SECRET: z.string().default('ethaum-default-dev-secret-change-in-production-min-32-chars'),
-  AI_PROVIDER: z.string().optional().default('openai'),
-  AI_API_KEY: z.string().optional().default(''),
-  STORAGE_PROVIDER: z.string().optional().default('local'),
-  STORAGE_BUCKET: z.string().optional().default(''),
-  STORAGE_REGION: z.string().optional().default(''),
-  STORAGE_ACCESS_KEY_ID: z.string().optional().default(''),
-  STORAGE_SECRET_ACCESS_KEY: z.string().optional().default(''),
-  STORAGE_LOCAL_DIR: z.string().default('./uploads'),
-});
+const envSchema = z
+  .object({
+    PORT: z.string().default('5000').transform((val) => parseInt(val, 10)),
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    CLIENT_URL: z.string().default('http://localhost:5173'),
+    DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+    DIRECT_URL: z.string().optional().default(''),
+    JWT_SECRET: z.string().min(1, 'JWT_SECRET must be set'),
+    AI_PROVIDER: z.string().optional().default('openai'),
+    AI_API_KEY: z.string().optional().default(''),
+    STORAGE_PROVIDER: z.string().optional().default('local'),
+    STORAGE_BUCKET: z.string().optional().default(''),
+    STORAGE_REGION: z.string().optional().default(''),
+    STORAGE_ACCESS_KEY_ID: z.string().optional().default(''),
+    STORAGE_SECRET_ACCESS_KEY: z.string().optional().default(''),
+    STORAGE_LOCAL_DIR: z.string().default('./uploads'),
+  })
+  .refine(
+    (data) => {
+      if (data.NODE_ENV === 'production') {
+        return data.JWT_SECRET.length >= 32;
+      }
+      return true;
+    },
+    {
+      message: 'JWT_SECRET must be at least 32 characters long in production mode',
+      path: ['JWT_SECRET'],
+    }
+  );
 
 const parsed = envSchema.safeParse(process.env);
 

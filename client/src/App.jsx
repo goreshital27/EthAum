@@ -1,9 +1,20 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from './services/api';
-import { ShieldCheck, Activity, Globe, HeartPulse } from 'lucide-react';
+import api from './api/axios';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import PatientDashboard from './pages/PatientDashboard';
+import HospitalDashboard from './pages/HospitalDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import { ShieldCheck, Activity, Globe, HeartPulse, User, LogIn, UserPlus, LogOut } from 'lucide-react';
 
 function Home() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
   const { data: health, isLoading, error } = useQuery({
     queryKey: ['serverHealth'],
     queryFn: async () => {
@@ -12,6 +23,9 @@ function Home() {
     },
     retry: 1,
   });
+
+  const dashboardRoute =
+    user?.role === 'PATIENT' ? '/patient' : user?.role === 'HOSPITAL' ? '/hospital' : '/admin';
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
@@ -26,11 +40,46 @@ function Home() {
             </span>
           </div>
 
-          <div className="flex items-center space-x-4 text-sm text-slate-600">
-            <span className="hidden sm:inline">AI-Powered Medical Tourism</span>
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+          <div className="flex items-center space-x-4">
+            <span className="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
               AI-assisted coordination, not medical advice
             </span>
+
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <Link
+                  to={dashboardRoute}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold hover:bg-sky-100 transition-colors"
+                >
+                  <User className="h-3.5 w-3.5" />
+                  <span>Dashboard ({user.role})</span>
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <LogOut className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Log out</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <LogIn className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Sign In</span>
+                </Link>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-xs font-semibold text-white shadow-sm transition-colors"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>Register</span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -44,6 +93,23 @@ function Home() {
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             EthAum connects patients with top international hospitals, transparent cost comparisons, and dedicated end-to-end medical travel support.
           </p>
+
+          {!user && (
+            <div className="flex items-center justify-center space-x-4 pt-2">
+              <Link
+                to="/register"
+                className="px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-sm transition-all"
+              >
+                Get Started
+              </Link>
+              <Link
+                to="/login"
+                className="px-6 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm border border-slate-200 shadow-sm transition-all"
+              >
+                Sign In
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Server & System Status Card */}
@@ -73,18 +139,12 @@ function Home() {
               {isLoading ? (
                 <span className="text-slate-400">Checking...</span>
               ) : error ? (
-                <span className="text-slate-400">Awaiting Neon Credentials</span>
+                <span className="text-slate-400">Unreachable</span>
               ) : (
-                <span className="text-emerald-600 font-medium">{health?.db || 'Connected'}</span>
+                <span className="text-emerald-600 font-medium">{health?.db || 'connected'}</span>
               )}
             </div>
           </div>
-
-          {error && (
-            <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs text-slate-600 border border-slate-200">
-              Note: Start the server with <code className="bg-slate-200 px-1 py-0.5 rounded">npm run dev</code> in the <code className="bg-slate-200 px-1 py-0.5 rounded">server</code> folder to verify backend and database connectivity.
-            </div>
-          )}
         </div>
 
         {/* Quick Features Preview */}
@@ -118,8 +178,41 @@ function Home() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected Dashboard Routes */}
+        <Route
+          path="/patient"
+          element={
+            <ProtectedRoute allowedRoles={['PATIENT']}>
+              <PatientDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hospital"
+          element={
+            <ProtectedRoute allowedRoles={['HOSPITAL']}>
+              <HospitalDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }

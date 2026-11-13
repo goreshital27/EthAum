@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import config from './config/index.js';
 import prisma from './config/prisma.js';
 import errorHandler from './middleware/errorHandler.js';
+import authRoutes from './modules/auth/auth.routes.js';
 
 const app = express();
 
@@ -39,7 +40,7 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // GET /api/health - Health check endpoint verifying app and database connection
-app.get('/api/health', async (req, res, next) => {
+app.get('/api/health', async (req, res) => {
   try {
     // Run simple query against PostgreSQL database
     await prisma.$queryRaw`SELECT 1`;
@@ -48,7 +49,6 @@ app.get('/api/health', async (req, res, next) => {
       db: 'connected',
     });
   } catch (error) {
-    // If database connection is not yet configured or fails, report cleanly without crashing
     return res.status(503).json({
       status: 'error',
       db: 'disconnected',
@@ -56,6 +56,9 @@ app.get('/api/health', async (req, res, next) => {
     });
   }
 });
+
+// Auth Routes: /api/auth/register, /api/auth/login, /api/auth/logout, /api/auth/me
+app.use('/api/auth', authRoutes);
 
 // Root API index
 app.get('/api', (req, res) => {
