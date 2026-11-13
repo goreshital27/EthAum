@@ -16,6 +16,12 @@ import {
   grantCaseConsent,
 } from '../records/records.controller.js';
 import { grantConsentSchema } from '../records/records.schemas.js';
+import {
+  createCaseEnquiry,
+  getCaseEnquiries,
+} from '../quotes/enquiries.controller.js';
+import { getPatientQuotes } from '../quotes/quotes.controller.js';
+import { createEnquirySchema } from '../quotes/quotes.schemas.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validation.js';
 
@@ -69,6 +75,30 @@ router.post(
   requireRole('PATIENT'),
   validate({ params: caseIdParamSchema, body: grantConsentSchema }),
   grantCaseConsent
+);
+
+// POST /api/cases/:id/enquiries (Patient submits case enquiry to hospital)
+router.post(
+  '/:id/enquiries',
+  requireRole('PATIENT'),
+  validate({ params: caseIdParamSchema, body: createEnquirySchema }),
+  createCaseEnquiry
+);
+
+// GET /api/cases/:id/enquiries (Patient lists enquiries for this case)
+router.get(
+  '/:id/enquiries',
+  requireRole('PATIENT'),
+  validate({ params: caseIdParamSchema }),
+  getCaseEnquiries
+);
+
+// GET /api/cases/:id/quotes (Patient lists received quotations for this case)
+router.get(
+  '/:id/quotes',
+  requireRole('PATIENT'),
+  validate({ params: caseIdParamSchema }),
+  getPatientQuotes
 );
 
 export default router;

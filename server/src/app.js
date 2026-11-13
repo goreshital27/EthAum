@@ -20,6 +20,11 @@ import {
   consentsRoutes,
 } from './modules/records/records.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
+import hospitalEnquiriesRoutes from './modules/quotes/enquiries.routes.js';
+import {
+  hospitalQuotesRoutes,
+  patientQuotesRoutes,
+} from './modules/quotes/quotes.routes.js';
 
 const app = express();
 
@@ -87,6 +92,13 @@ app.use('/api/records', recordsRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/consents', consentsRoutes);
 app.use('/api/ai', aiRoutes);
+
+// Hospital Operations & Quotations Protected Routes
+app.use('/api/hospital/enquiries', hospitalEnquiriesRoutes);
+app.use('/api/hospital/quotes', hospitalQuotesRoutes);
+
+// Patient Quotation Actions
+app.use('/api/quotes', patientQuotesRoutes);
 
 // Root API index
 app.get('/api', (req, res) => {
