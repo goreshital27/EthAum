@@ -8,6 +8,22 @@ import config from '../config/index.js';
  * - Return clean, structured error responses.
  */
 export const errorHandler = (err, req, res, next) => {
+  // Prisma Unique Constraint Violation
+  if (err.code === 'P2002') {
+    return res.status(409).json({
+      status: 'error',
+      message: 'A record with these details already exists.',
+    });
+  }
+
+  // Prisma Record Not Found
+  if (err.code === 'P2025') {
+    return res.status(404).json({
+      status: 'error',
+      message: 'The requested record was not found.',
+    });
+  }
+
   const statusCode = err.statusCode || (res.statusCode !== 200 ? res.statusCode : 500);
 
   // Safe logging without leaking PHI or secrets

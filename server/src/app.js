@@ -37,13 +37,19 @@ import reviewsRoutes from './modules/reviews/reviews.routes.js';
 
 const app = express();
 
+// Trust first proxy hop in production (e.g., Render, Fly.io, Cloudflare, Nginx)
+if (config.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Security headers
 app.use(helmet());
 
-// Cross-Origin Resource Sharing
+// Cross-Origin Resource Sharing (strip trailing slashes from CLIENT_URL)
+const clientOrigin = config.CLIENT_URL ? config.CLIENT_URL.replace(/\/+$/, '') : config.CLIENT_URL;
 app.use(
   cors({
-    origin: config.CLIENT_URL,
+    origin: clientOrigin,
     credentials: true,
   })
 );

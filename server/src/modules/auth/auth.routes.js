@@ -7,6 +7,18 @@ import { requireAuth } from '../../middleware/auth.js';
 
 const router = Router();
 
+// Strict registration rate limiter: 20 attempts per hour per IP
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 'error',
+    message: 'Too many registration attempts. Please try again after 1 hour.',
+  },
+});
+
 // Strict login rate limiter: 10 attempts per 15 minutes per IP
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -20,7 +32,7 @@ const loginLimiter = rateLimit({
 });
 
 // POST /api/auth/register
-router.post('/register', validate({ body: registerSchema }), register);
+router.post('/register', registerLimiter, validate({ body: registerSchema }), register);
 
 // POST /api/auth/login
 router.post('/login', loginLimiter, validate({ body: loginSchema }), login);

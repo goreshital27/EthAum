@@ -7,6 +7,7 @@ import {
   replyReviewSchema,
   reviewIdParamSchema,
   bookingIdParamSchema,
+  hospitalIdParamSchema,
   hospitalReviewsQuerySchema,
 } from './reviews.schemas.js';
 import {
@@ -47,7 +48,7 @@ router.get(
 // Public paginated reviews for a hospital
 router.get(
   '/hospital/:hospitalId',
-  validate({ query: hospitalReviewsQuerySchema }),
+  validate({ params: hospitalIdParamSchema, query: hospitalReviewsQuerySchema }),
   getPublicHospitalReviews
 );
 

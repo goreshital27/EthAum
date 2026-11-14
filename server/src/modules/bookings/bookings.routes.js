@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validation.js';
 import {
@@ -14,6 +15,19 @@ import {
 } from './bookings.controller.js';
 
 const router = Router();
+
+// Payment rate limiter: 10 attempts per 15 minutes keyed by user ID (or IP)
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.ip,
+  message: {
+    status: 'error',
+    message: 'Too many payment attempts. Please wait a moment before trying again.',
+  },
+});
 
 // All booking routes require authentication
 router.use(requireAuth);
@@ -44,6 +58,7 @@ router.get(
 router.post(
   '/:id/pay',
   requireRole('PATIENT'),
+  paymentLimiter,
   validate({ params: bookingIdParamSchema }),
   payBookingDeposit
 );

@@ -7,13 +7,18 @@ import {
 import {
   documentIdParamSchema,
   consentIdParamSchema,
+  rawTokenParamSchema,
 } from './records.schemas.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validation.js';
 
 // 1. Records router mounted at /api/records
 export const recordsRoutes = Router();
-recordsRoutes.get('/raw/:token', streamRawDocument);
+recordsRoutes.get(
+  '/raw/:token',
+  validate({ params: rawTokenParamSchema }),
+  streamRawDocument
+);
 
 // 2. Documents router mounted at /api/documents
 export const documentsRoutes = Router();

@@ -29,6 +29,10 @@ export const bookingIdParamSchema = z.object({
   bookingId: z.string().uuid({ message: 'Valid booking ID is required' }),
 });
 
+export const hospitalIdParamSchema = z.object({
+  hospitalId: z.string().uuid({ message: 'Valid hospital ID (UUID) is required' }),
+});
+
 export const hospitalReviewsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),
