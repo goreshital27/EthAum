@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
 import HospitalCard from '../components/HospitalCard';
+import IntroSplash from '../components/IntroSplash';
 import { Search, Compass, FileCheck, FileSpreadsheet, Video, HeartHandshake, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function Home() {
@@ -37,6 +38,8 @@ export default function Home() {
 
   return (
     <div className="space-y-16">
+      <IntroSplash />
+
       {/* 1. Hero Section */}
       <section className="bg-gradient-to-b from-teal-50/60 to-slate-50 pt-16 pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200">
         <div className="max-w-4xl mx-auto text-center space-y-6">
