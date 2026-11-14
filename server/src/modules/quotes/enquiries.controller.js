@@ -1,4 +1,5 @@
 import prisma from '../../config/prisma.js';
+import { enforceStageTransition } from '../cases/stagePipeline.js';
 
 /**
  * Helper to fetch and verify the hospital associated with a logged-in HOSPITAL user.
@@ -413,13 +414,44 @@ export async function declineHospitalEnquiry(req, res, next) {
 
 /**
  * POST /api/cases/:caseId/enquiries
- * Patient sends a case enquiry to an approved hospital
+ * Patient sends a case enquiry to one or more approved hospitals (max 5)
  */
 export async function createCaseEnquiry(req, res, next) {
   try {
     const caseId = req.params.caseId || req.params.id;
-    const { hospitalId, urgency = 'NORMAL', notes } = req.body;
+    const {
+      hospitalId,
+      hospitalIds,
+      grantConsent = true,
+      urgency = 'NORMAL',
+      notes,
+    } = req.body;
     const patientId = req.user.id;
+
+    // Normalize targets to array of unique IDs
+    const targetHospitalIds = Array.from(
+      new Set(
+        Array.isArray(hospitalIds) && hospitalIds.length > 0
+          ? hospitalIds
+          : hospitalId
+          ? [hospitalId]
+          : []
+      )
+    );
+
+    if (targetHospitalIds.length === 0) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'At least one target hospital ID is required',
+      });
+    }
+
+    if (targetHospitalIds.length > 5) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'You can request quotes from up to 5 hospitals at a time',
+      });
+    }
 
     // Verify patient owns the case
     const medicalCase = await prisma.medicalCase.findFirst({
@@ -440,87 +472,106 @@ export async function createCaseEnquiry(req, res, next) {
       });
     }
 
-    // Verify hospital exists and is APPROVED
-    const hospital = await prisma.hospital.findUnique({
-      where: { id: hospitalId },
-    });
-
-    if (!hospital || hospital.verificationStatus !== 'APPROVED') {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Target hospital does not exist or is not verified and approved',
-      });
-    }
-
-    // Check for duplicate enquiry
-    const existingEnquiry = await prisma.enquiry.findUnique({
+    // Verify all target hospitals exist and are APPROVED
+    const approvedHospitals = await prisma.hospital.findMany({
       where: {
-        caseId_hospitalId: {
-          caseId,
-          hospitalId,
-        },
+        id: { in: targetHospitalIds },
+        verificationStatus: 'APPROVED',
       },
     });
 
-    if (existingEnquiry) {
-      return res.status(409).json({
+    if (approvedHospitals.length !== targetHospitalIds.length) {
+      return res.status(400).json({
         status: 'fail',
-        message: 'An enquiry has already been submitted to this hospital for this case',
+        message: 'One or more selected hospitals are invalid or pending administrative approval',
       });
     }
 
-    // Execute enquiry creation, consent grant, and case stage update in a single transaction
+    // Check for existing enquiries
+    const existingEnquiries = await prisma.enquiry.findMany({
+      where: {
+        caseId,
+        hospitalId: { in: targetHospitalIds },
+      },
+    });
+
+    const existingMap = new Set(existingEnquiries.map((e) => e.hospitalId));
+    const newHospitalIds = targetHospitalIds.filter((id) => !existingMap.has(id));
+
+    if (newHospitalIds.length === 0) {
+      return res.status(409).json({
+        status: 'fail',
+        message: 'Enquiries have already been submitted to all selected hospitals for this case',
+      });
+    }
+
+    // Execute enquiry creation, optional consent grant, and stage transition in one transaction
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30); // 30-day consent for quote evaluation
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create Enquiry
-      const newEnquiry = await tx.enquiry.create({
-        data: {
-          caseId,
-          hospitalId,
-          status: 'NEW',
-          urgency,
-          notes,
-        },
-      });
+      const createdEnquiries = [];
 
-      // 2. Grant medical records review consent to the hospital
-      await tx.consent.upsert({
-        where: {
-          caseId_hospitalId: {
+      for (const hId of newHospitalIds) {
+        // 1. Create Enquiry row (status NEW in schema enum)
+        const enq = await tx.enquiry.create({
+          data: {
             caseId,
-            hospitalId,
+            hospitalId: hId,
+            status: 'NEW',
+            urgency,
+            notes,
           },
-        },
-        create: {
-          caseId,
-          hospitalId,
-          scope: 'TREATMENT_QUOTATION',
-          expiresAt,
-        },
-        update: {
-          scope: 'TREATMENT_QUOTATION',
-          expiresAt,
-          revokedAt: null,
-        },
-      });
+        });
+        createdEnquiries.push(enq);
 
-      // 3. Advance case stage to QUOTE_REQUESTED if currently earlier in pipeline
-      const earlyStages = ['NEW', 'QUALIFIED', 'MEDICAL_REVIEW'];
-      if (earlyStages.includes(medicalCase.stage)) {
+        // 2. Grant medical records review consent if requested
+        if (grantConsent) {
+          await tx.consent.upsert({
+            where: {
+              caseId_hospitalId: {
+                caseId,
+                hospitalId: hId,
+              },
+            },
+            create: {
+              caseId,
+              hospitalId: hId,
+              scope: 'TREATMENT_QUOTATION',
+              expiresAt,
+            },
+            update: {
+              scope: 'TREATMENT_QUOTATION',
+              expiresAt,
+              revokedAt: null,
+            },
+          });
+        }
+      }
+
+      // 3. Move case stage to QUOTE_REQUESTED via enforceStageTransition
+      let stage = medicalCase.stage;
+      if (['NEW', 'QUALIFIED', 'MEDICAL_REVIEW'].includes(stage)) {
+        if (stage === 'NEW') stage = enforceStageTransition(stage, 'QUALIFIED');
+        if (stage === 'QUALIFIED') stage = enforceStageTransition(stage, 'MEDICAL_REVIEW');
+        if (stage === 'MEDICAL_REVIEW') stage = enforceStageTransition(stage, 'QUOTE_REQUESTED');
+
         await tx.medicalCase.update({
           where: { id: caseId },
-          data: { stage: 'QUOTE_REQUESTED' },
+          data: { stage },
         });
       }
 
-      return newEnquiry;
+      return {
+        enquiries: createdEnquiries,
+        stage,
+        createdCount: createdEnquiries.length,
+      };
     });
 
     return res.status(201).json({
       status: 'ok',
-      message: 'Case enquiry submitted to hospital successfully',
+      message: `Enquiries successfully submitted to ${result.createdCount} hospital(s)`,
       data: result,
     });
   } catch (error) {

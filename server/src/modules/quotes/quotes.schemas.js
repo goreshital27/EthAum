@@ -55,13 +55,26 @@ export const declineEnquirySchema = z.object({
 });
 
 /**
- * Patient creating an enquiry to a hospital
+ * Patient creating an enquiry to a hospital (single or batch up to 5)
  */
-export const createEnquirySchema = z.object({
-  hospitalId: z.string().uuid({ message: 'Valid hospital ID is required' }),
-  urgency: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).default('NORMAL'),
-  notes: z.string().max(2000).optional().nullable(),
-});
+export const createEnquirySchema = z
+  .object({
+    hospitalId: z.string().uuid({ message: 'Valid hospital ID is required' }).optional(),
+    hospitalIds: z
+      .array(z.string().uuid({ message: 'Each hospital ID must be a valid UUID' }))
+      .max(5, 'Maximum of 5 hospitals allowed per quote request')
+      .optional(),
+    grantConsent: z.boolean().default(true),
+    urgency: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).default('NORMAL'),
+    notes: z.string().max(2000).optional().nullable(),
+  })
+  .refine(
+    (data) => Boolean(data.hospitalId || (data.hospitalIds && data.hospitalIds.length > 0)),
+    {
+      message: 'Please provide either hospitalId or a non-empty hospitalIds array (max 5)',
+      path: ['hospitalIds'],
+    }
+  );
 
 /**
  * Line item schema for quotation

@@ -25,6 +25,7 @@ import {
   hospitalQuotesRoutes,
   patientQuotesRoutes,
 } from './modules/quotes/quotes.routes.js';
+import hospitalPortalRoutes from './modules/hospitalPortal/hospitalPortal.routes.js';
 
 const app = express();
 
@@ -96,6 +97,8 @@ app.use('/api/ai', aiRoutes);
 // Hospital Operations & Quotations Protected Routes
 app.use('/api/hospital/enquiries', hospitalEnquiriesRoutes);
 app.use('/api/hospital/quotes', hospitalQuotesRoutes);
+app.use('/api/hospital-portal', hospitalPortalRoutes);
+app.use('/api/hospital', hospitalPortalRoutes);
 
 // Patient Quotation Actions
 app.use('/api/quotes', patientQuotesRoutes);
