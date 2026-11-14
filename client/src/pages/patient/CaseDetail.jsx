@@ -28,6 +28,10 @@ import {
   ExternalLink,
   MessageSquare,
   CalendarCheck,
+  Star,
+  CheckSquare,
+  Square,
+  HeartHandshake,
 } from 'lucide-react';
 
 export default function CaseDetail() {
@@ -189,6 +193,79 @@ export default function CaseDetail() {
     selectedChatHospitalId || (participatingHospitals.length > 0 ? participatingHospitals[0].id : null);
   const activeChatHospital =
     participatingHospitals.find((h) => h.id === activeChatHospitalId) || participatingHospitals[0];
+
+  // 9. Fetch Aftercare Tasks
+  const {
+    data: aftercareData,
+    isLoading: isAftercareLoading,
+  } = useQuery({
+    queryKey: ['caseAftercareTasks', caseId],
+    queryFn: async () => {
+      const res = await api.get(`/aftercare/cases/${caseId}/tasks`);
+      return res.data?.data;
+    },
+    enabled: Boolean(caseId),
+  });
+
+  const aftercareTasks = aftercareData?.tasks || [];
+  const aftercareBooking = aftercareData?.booking || (caseItem?.bookings?.[0] || null);
+
+  // Toggle Aftercare Task mutation
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ taskId, completed }) => {
+      const res = await api.patch(`/aftercare/tasks/${taskId}`, { completed });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['caseDetail', caseId]);
+      queryClient.invalidateQueries(['caseAftercareTasks', caseId]);
+      if (data?.data?.caseClosed) {
+        queryClient.invalidateQueries(['bookingReview']);
+      }
+    },
+    onError: (err) => {
+      alert(err.response?.data?.message || 'Failed to update aftercare task');
+    },
+  });
+
+  // 10. Fetch Review for Booking
+  const {
+    data: reviewData,
+    isLoading: isReviewLoading,
+  } = useQuery({
+    queryKey: ['bookingReview', aftercareBooking?.id],
+    queryFn: async () => {
+      if (!aftercareBooking?.id) return null;
+      const res = await api.get(`/reviews/booking/${aftercareBooking.id}`);
+      return res.data?.data;
+    },
+    enabled: Boolean(aftercareBooking?.id),
+  });
+
+  // Review Form State
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
+  const [reviewError, setReviewError] = useState('');
+  const [reviewSuccess, setReviewSuccess] = useState('');
+
+  // Submit Review mutation
+  const submitReviewMutation = useMutation({
+    mutationFn: async ({ bookingId, rating, comment }) => {
+      setReviewError('');
+      const res = await api.post('/reviews', { bookingId, rating, comment });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['bookingReview', aftercareBooking?.id]);
+      queryClient.invalidateQueries(['caseDetail', caseId]);
+      setReviewSuccess('Thank you! Your verified patient review has been published.');
+      setTimeout(() => setReviewSuccess(''), 5000);
+    },
+    onError: (err) => {
+      setReviewError(err.response?.data?.message || 'Failed to submit review');
+    },
+  });
 
   // Handle Document View (fetches signed URL and opens in new window)
   const handleViewDocument = async (docId) => {
@@ -555,6 +632,340 @@ export default function CaseDetail() {
             </div>
           )}
         </section>
+
+        {/* Post-Treatment Recovery & Aftercare Section (Requirement Part A) */}
+        {(caseItem.stage === 'AFTERCARE' || caseItem.stage === 'CLOSED' || aftercareTasks.length > 0) && (
+          <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                  <HeartHandshake className="h-5 w-5 text-teal-700" />
+                  <span>Post-Procedure Recovery &amp; Aftercare Tasks</span>
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Coordination reminders only, not medical advice. Check off milestones as you complete them with your healthcare team.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-semibold bg-teal-50 text-teal-800 px-3 py-1 rounded-full border border-teal-200">
+                  {aftercareData?.completedCount || 0} of {aftercareData?.totalCount || 4} Completed
+                </span>
+                {caseItem.stage === 'CLOSED' && (
+                  <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-300">
+                    Case Closed
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Progress indicator */}
+            {aftercareData?.totalCount > 0 && (
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-teal-600 h-2 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.round(
+                      ((aftercareData?.completedCount || 0) / aftercareData.totalCount) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            )}
+
+            {isAftercareLoading ? (
+              <div className="py-8 text-center text-slate-400 text-xs">Loading aftercare checklist...</div>
+            ) : aftercareTasks.length === 0 ? (
+              <div className="p-8 text-center space-y-2 bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+                <HeartHandshake className="h-8 w-8 text-slate-300 mx-auto" />
+                <p className="text-xs font-bold text-slate-700">No Aftercare Tasks Yet</p>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Aftercare tasks will be initialized automatically as soon as your treating hospital marks your procedure complete.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {aftercareTasks.map((task) => {
+                  const isDone = Boolean(task.completedAt);
+
+                  return (
+                    <div
+                      key={task.id}
+                      className={`p-4 rounded-xl border transition-all text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isDone
+                          ? 'bg-emerald-50/40 border-emerald-200'
+                          : 'bg-slate-50/80 border-slate-200 hover:border-teal-300'
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3 flex-1">
+                        <button
+                          type="button"
+                          disabled={toggleTaskMutation.isLoading}
+                          onClick={() =>
+                            toggleTaskMutation.mutate({
+                              taskId: task.id,
+                              completed: !isDone,
+                            })
+                          }
+                          className="mt-0.5 text-slate-400 hover:text-teal-700 transition-colors focus:outline-hidden"
+                          title={isDone ? 'Mark as pending' : 'Mark as completed'}
+                        >
+                          {isDone ? (
+                            <CheckSquare className="h-5 w-5 text-emerald-600" />
+                          ) : (
+                            <Square className="h-5 w-5 text-slate-400 hover:text-teal-600" />
+                          )}
+                        </button>
+
+                        <div className="space-y-1">
+                          <h4
+                            className={`font-bold text-sm ${
+                              isDone ? 'text-slate-600 line-through' : 'text-slate-900'
+                            }`}
+                          >
+                            {task.title}
+                          </h4>
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            {task.description}
+                          </p>
+
+                          <div className="flex items-center space-x-2 text-[11px] text-slate-500 pt-0.5">
+                            {task.dueDate && (
+                              <span className="flex items-center space-x-1">
+                                <Calendar className="h-3 w-3 text-slate-400" />
+                                <span>
+                                  Target: {new Date(task.dueDate).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  })}
+                                </span>
+                              </span>
+                            )}
+                            {isDone && (
+                              <>
+                                <span>&bull;</span>
+                                <span className="text-emerald-700 font-semibold">
+                                  Completed {new Date(task.completedAt).toLocaleDateString()}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="self-end sm:self-center shrink-0">
+                        {isDone ? (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Completed
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={toggleTaskMutation.isLoading}
+                            onClick={() =>
+                              toggleTaskMutation.mutate({
+                                taskId: task.id,
+                                completed: true,
+                              })
+                            }
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-700 text-white hover:bg-teal-800 transition-colors shadow-2xs"
+                          >
+                            Mark Done
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className="p-3 bg-teal-50 border border-teal-100 rounded-xl text-[11px] text-teal-800 flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0" />
+                  <span>
+                    When all aftercare recovery tasks are marked complete, this medical case will transition to <strong>CLOSED</strong>, unlocking your verified review.
+                  </span>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Verified Patient Review Section (Requirement Part B) */}
+        {(caseItem.stage === 'CLOSED' || aftercareBooking?.status === 'COMPLETED') && (
+          <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                  <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+                  <span>Verified Patient Hospital Review</span>
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Share your authentic healthcare journey. Published reviews display your first name and country with a Verified patient badge.
+                </p>
+              </div>
+
+              {reviewData && (
+                <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                  Verified Review Published
+                </span>
+              )}
+            </div>
+
+            {/* Error & Success Alerts */}
+            {reviewSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center space-x-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>{reviewSuccess}</span>
+              </div>
+            )}
+            {reviewError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-center space-x-2">
+                <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                <span>{reviewError}</span>
+              </div>
+            )}
+
+            {isReviewLoading ? (
+              <div className="py-8 text-center text-slate-400 text-xs">Loading review status...</div>
+            ) : reviewData ? (
+              /* Already Reviewed: Display the Review and Hospital Reply */
+              <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-5 space-y-3 text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`h-4 w-4 ${
+                            s <= reviewData.rating
+                              ? 'text-amber-400 fill-amber-400'
+                              : 'text-slate-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-bold text-slate-900 text-sm">
+                      {reviewData.rating} out of 5 Stars
+                    </span>
+                    <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Verified patient
+                    </span>
+                  </div>
+
+                  <span className="text-slate-400 text-[11px]">
+                    Reviewed on {new Date(reviewData.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+
+                {reviewData.comment ? (
+                  <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                    "{reviewData.comment}"
+                  </p>
+                ) : (
+                  <p className="text-slate-400 italic">No written comment provided.</p>
+                )}
+
+                {/* Hospital Public Reply */}
+                {reviewData.hospitalReply && (
+                  <div className="mt-3 p-4 bg-teal-50/60 rounded-xl border-l-4 border-teal-600 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-teal-900 text-xs">
+                        Official Response from {reviewData.hospital?.name || 'Hospital'}:
+                      </span>
+                    </div>
+                    <p className="text-slate-700 italic text-xs leading-relaxed">
+                      "{reviewData.hospitalReply}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : !aftercareBooking ? (
+              <div className="p-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-slate-200">
+                A completed hospital booking is required to submit a verified patient review.
+              </div>
+            ) : (
+              /* Review Form */
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!aftercareBooking?.id) return;
+                  submitReviewMutation.mutate({
+                    bookingId: aftercareBooking.id,
+                    rating: reviewRating,
+                    comment: reviewComment.trim(),
+                  });
+                }}
+                className="space-y-4 text-xs"
+              >
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1.5">
+                    Your Overall Rating *
+                  </label>
+                  <div className="flex items-center space-x-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onMouseEnter={() => setReviewHoverRating(star)}
+                        onMouseLeave={() => setReviewHoverRating(0)}
+                        onClick={() => setReviewRating(star)}
+                        className="p-1 text-slate-300 hover:scale-110 transition-transform focus:outline-hidden"
+                      >
+                        <Star
+                          className={`h-7 w-7 ${
+                            star <= (reviewHoverRating || reviewRating)
+                              ? 'text-amber-400 fill-amber-400'
+                              : 'text-slate-300'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    <span className="ml-2 font-bold text-slate-700">
+                      {reviewHoverRating || reviewRating} / 5 Stars
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-800">
+                      Review Comments &amp; Treatment Experience
+                    </label>
+                    <span
+                      className={`text-[11px] ${
+                        reviewComment.length > 900 ? 'text-amber-600 font-bold' : 'text-slate-400'
+                      }`}
+                    >
+                      {reviewComment.length}/1000 characters
+                    </span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    maxLength={1000}
+                    placeholder="Describe your care experience, clinical facilities, doctor attentiveness, and recovery support (plain text only, max 1000 characters)..."
+                    className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Privacy Protection: Your full name, email, and user identity are never revealed. Reviews display as e.g. "John (United States)" with a Verified patient badge.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={submitReviewMutation.isLoading}
+                    className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 disabled:opacity-50 shadow-sm transition-colors"
+                  >
+                    {submitReviewMutation.isLoading ? 'Publishing Review...' : 'Submit Verified Review'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
+        )}
 
         {/* Document Records & Upload Section */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">

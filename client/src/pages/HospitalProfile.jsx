@@ -554,8 +554,8 @@ export default function HospitalProfile() {
                     <span className="text-xs text-slate-400">&bull;</span>
                     <span className="text-xs text-slate-500">{rev.country}</span>
                     {rev.isVerified && (
-                      <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                        Verified Visit
+                      <span className="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        Verified patient
                       </span>
                     )}
                   </div>

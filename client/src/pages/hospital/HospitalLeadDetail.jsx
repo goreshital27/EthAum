@@ -29,6 +29,10 @@ import {
   ExternalLink,
   MessageSquare,
   X,
+  HeartHandshake,
+  CheckSquare,
+  Square,
+  Star,
 } from 'lucide-react';
 
 export default function HospitalLeadDetail() {
@@ -127,6 +131,76 @@ export default function HospitalLeadDetail() {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     });
   };
+
+  // Aftercare & Treatment Completion State & Queries
+  const [completeTreatmentError, setCompleteTreatmentError] = useState('');
+  const [completeTreatmentSuccess, setCompleteTreatmentSuccess] = useState('');
+
+  const {
+    data: aftercareData,
+    isLoading: isAftercareLoading,
+  } = useQuery({
+    queryKey: ['leadAftercare', leadData?.caseId],
+    queryFn: async () => {
+      const res = await api.get(`/aftercare/cases/${leadData.caseId}/tasks`);
+      return res.data?.data;
+    },
+    enabled: Boolean(leadData?.caseId),
+  });
+
+  const aftercareTasks = aftercareData?.tasks || [];
+  const aftercareBooking = aftercareData?.booking;
+
+  const completeTreatmentMutation = useMutation({
+    mutationFn: async () => {
+      setCompleteTreatmentError('');
+      const res = await api.post(`/aftercare/cases/${leadData.caseId}/complete-treatment`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['leadCaseDetail', enquiryId]);
+      queryClient.invalidateQueries(['leadAftercare', leadData?.caseId]);
+      setCompleteTreatmentSuccess('Treatment marked complete! Case transitioned to AFTERCARE with standard coordination tasks.');
+      setTimeout(() => setCompleteTreatmentSuccess(''), 6000);
+    },
+    onError: (err) => {
+      setCompleteTreatmentError(err.response?.data?.message || 'Failed to mark treatment complete');
+    },
+  });
+
+  // Review & Reply State & Queries
+  const {
+    data: reviewData,
+  } = useQuery({
+    queryKey: ['leadReview', aftercareBooking?.id],
+    queryFn: async () => {
+      if (!aftercareBooking?.id) return null;
+      const res = await api.get(`/reviews/booking/${aftercareBooking.id}`);
+      return res.data?.data;
+    },
+    enabled: Boolean(aftercareBooking?.id),
+  });
+
+  const [replyText, setReplyText] = useState('');
+  const [replyError, setReplyError] = useState('');
+  const [replySuccess, setReplySuccess] = useState('');
+
+  const replyMutation = useMutation({
+    mutationFn: async ({ reviewId, hospitalReply }) => {
+      setReplyError('');
+      const res = await api.post(`/reviews/${reviewId}/reply`, { hospitalReply });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['leadReview', aftercareBooking?.id]);
+      setReplyText('');
+      setReplySuccess('Your official public response has been published.');
+      setTimeout(() => setReplySuccess(''), 5000);
+    },
+    onError: (err) => {
+      setReplyError(err.response?.data?.message || 'Failed to submit response');
+    },
+  });
 
   // Quote Builder State
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
@@ -985,6 +1059,204 @@ export default function HospitalLeadDetail() {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Treatment Completion & Aftercare Management Section (Requirement Part A & B) */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+              <HeartHandshake className="h-5 w-5 text-indigo-600" />
+              <span>Treatment Completion &amp; Aftercare Oversight</span>
+            </h2>
+            <p className="text-xs text-slate-500">
+              Mark procedure complete upon patient discharge to initiate post-procedure coordination tasks and verified feedback.
+            </p>
+          </div>
+
+          <span className="text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1 rounded-full self-start sm:self-auto">
+            Stage: {leadData.case?.stage}
+          </span>
+        </div>
+
+        {completeTreatmentSuccess && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center space-x-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>{completeTreatmentSuccess}</span>
+          </div>
+        )}
+        {completeTreatmentError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-center space-x-2">
+            <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+            <span>{completeTreatmentError}</span>
+          </div>
+        )}
+
+        {/* Mark Treatment Complete Action */}
+        {(leadData.case?.stage === 'BOOKED' || leadData.case?.stage === 'TREATMENT') && (
+          <div className="p-5 rounded-xl bg-indigo-50/60 border border-indigo-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+            <div className="space-y-1">
+              <h3 className="font-bold text-indigo-950 text-sm">
+                Has patient's medical procedure concluded?
+              </h3>
+              <p className="text-indigo-800 leading-relaxed max-w-xl">
+                Marking treatment complete sequentially advances the journey through <strong>TREATMENT &rarr; AFTERCARE</strong> via system pipeline enforcement, marks booking as <strong>COMPLETED</strong>, and generates post-treatment recovery milestones.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={completeTreatmentMutation.isLoading}
+              onClick={() => completeTreatmentMutation.mutate()}
+              className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto"
+            >
+              {completeTreatmentMutation.isLoading
+                ? 'Processing...'
+                : 'Mark Treatment Complete'}
+            </button>
+          </div>
+        )}
+
+        {/* Aftercare Task Monitoring */}
+        {aftercareTasks.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Post-Procedure Milestones ({aftercareData?.completedCount || 0} of {aftercareData?.totalCount || 4} Completed)
+              </h3>
+              {aftercareData?.allCompleted && (
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  All Milestones Finished &bull; Case Closed
+                </span>
+              )}
+            </div>
+
+            <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden text-xs">
+              {aftercareTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={`p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                    task.completedAt ? 'bg-emerald-50/30' : 'bg-white'
+                  }`}
+                >
+                  <div className="space-y-0.5">
+                    <div className="flex items-center space-x-2">
+                      <span className={`font-bold ${task.completedAt ? 'text-slate-700 line-through' : 'text-slate-900'}`}>
+                        {task.title}
+                      </span>
+                      {task.dueDate && (
+                        <span className="text-[11px] text-slate-400">
+                          (Target: {new Date(task.dueDate).toLocaleDateString()})
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-slate-500 text-[11px]">{task.description}</p>
+                  </div>
+
+                  <div className="self-end sm:self-center shrink-0">
+                    {task.completedAt ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        Completed on {new Date(task.completedAt).toLocaleDateString()}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        Pending Patient Check-off
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Patient Review & Hospital Reply */}
+        {reviewData && (
+          <div className="pt-4 border-t border-slate-100 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-1.5">
+                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                <span>Verified Patient Review</span>
+              </h3>
+              <span className="text-[11px] text-slate-400">
+                Submitted {new Date(reviewData.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs">
+              <div className="flex items-center space-x-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={`h-4 w-4 ${
+                      s <= reviewData.rating
+                        ? 'text-amber-400 fill-amber-400'
+                        : 'text-slate-200'
+                    }`}
+                  />
+                ))}
+                <span className="ml-1.5 font-bold text-slate-900">{reviewData.rating} / 5 Stars</span>
+                <span className="ml-2 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Verified patient
+                </span>
+              </div>
+
+              {reviewData.comment && (
+                <p className="text-slate-700 italic">"{reviewData.comment}"</p>
+              )}
+
+              {/* Hospital Reply Display or Form */}
+              {reviewData.hospitalReply ? (
+                <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200 space-y-1">
+                  <span className="text-[11px] font-bold text-indigo-900">
+                    Your Official Public Response:
+                  </span>
+                  <p className="text-slate-600 text-xs italic">{reviewData.hospitalReply}</p>
+                </div>
+              ) : (
+                <div className="mt-4 pt-3 border-t border-slate-200 space-y-2">
+                  <label className="block text-xs font-bold text-slate-800">
+                    Post an Official Public Reply to this Review
+                  </label>
+                  {replySuccess && (
+                    <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-[11px]">
+                      {replySuccess}
+                    </div>
+                  )}
+                  {replyError && (
+                    <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-[11px]">
+                      {replyError}
+                    </div>
+                  )}
+                  <textarea
+                    rows={2}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    maxLength={1000}
+                    placeholder="Thank the patient and address their feedback (plain text only, max 1000 characters)..."
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">{replyText.length}/1000 chars</span>
+                    <button
+                      type="button"
+                      disabled={!replyText.trim() || replyMutation.isLoading}
+                      onClick={() =>
+                        replyMutation.mutate({
+                          reviewId: reviewData.id,
+                          hospitalReply: replyText.trim(),
+                        })
+                      }
+                      className="px-4 py-1.5 rounded-lg font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-2xs"
+                    >
+                      {replyMutation.isLoading ? 'Posting...' : 'Post Public Reply'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

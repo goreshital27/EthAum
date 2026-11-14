@@ -31,6 +31,8 @@ import consultationsRoutes from './modules/consultations/consultations.routes.js
 import messagesRoutes from './modules/messages/messages.routes.js';
 import notificationsRoutes from './modules/notifications/notifications.routes.js';
 import bookingsRoutes from './modules/bookings/bookings.routes.js';
+import aftercareRoutes from './modules/aftercare/aftercare.routes.js';
+import reviewsRoutes from './modules/reviews/reviews.routes.js';
 
 const app = express();
 
@@ -114,6 +116,12 @@ app.use('/api/hospital/appointments', consultationsRoutes);
 
 // Bookings & Escrow Deposits
 app.use('/api/bookings', bookingsRoutes);
+
+// Post-Procedure Aftercare Coordination
+app.use('/api/aftercare', aftercareRoutes);
+
+// Verified Patient Reviews & Hospital Replies
+app.use('/api/reviews', reviewsRoutes);
 
 // Direct Case Messages / Chat
 app.use('/api/cases/:caseId/messages', messagesRoutes);
