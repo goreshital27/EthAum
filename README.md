@@ -1,4 +1,4 @@
-# EthAum — AI-Powered International Healthcare Marketplace
+﻿# EthAum — AI-Powered International Healthcare Marketplace
 
 > **One-Line Pitch:** A trust-first cross-border medical marketplace connecting international patients with accredited global hospitals through transparent all-in pricing, sovereign record consent, and safe AI coordination.
 
@@ -113,17 +113,6 @@ All seed accounts share the password: `Demo@12345`
 ## Known Limitations
 
 - **Simulated Payments & Deposits**: All payments are simulated deposits only; no actual payment gateway is connected and no real currency is transferred.
-- **Ephemeral Local Storage**: Uploaded medical scans and diagnostic records are stored in local server storage (`uploads/private`) and do not persist across redeployments on ephemeral free cloud hosting.
-- **Hardware Permissions for Tele-Consultation**: Video calls via Jitsi require explicit browser permissions for webcam and microphone, as well as an unrestricted WebRTC connection.
-- **AI Provider Fallback**: AI intake readiness analysis and matching run in mock mode unless `AI_PROVIDER` and valid credentials (`GEMINI_API_KEY` or `ANTHROPIC_API_KEY`) are supplied.
-- **Free Tier Cold Starts**: On free database or hosting tiers (e.g. Neon serverless wake-up), the initial API request after an idle period may take 30–60 seconds to respond.
-- **Simulated Referral Payouts**: The 5% referral commission is calculated, tracked, and stored in the database, but external banking or crypto payout rails are simulated within the portal.
-
----
-
-## Known Limitations
-
-- **Simulated Payments & Deposits**: All payments and escrow-like financial flows are simulated deposits only; no actual payment gateway is connected and no real currency is transferred.
 - **Ephemeral Local Storage**: Uploaded medical scans and diagnostic records are stored in local server storage (`uploads/private`) and do not persist across redeployments on ephemeral free cloud hosting.
 - **Hardware Permissions for Tele-Consultation**: Video calls via Jitsi require explicit browser permissions for webcam and microphone, as well as an unrestricted WebRTC connection.
 - **AI Provider Fallback**: AI intake readiness analysis and matching run in mock mode unless `AI_PROVIDER` and valid credentials (`GEMINI_API_KEY` or `ANTHROPIC_API_KEY`) are supplied.
