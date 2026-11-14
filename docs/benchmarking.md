@@ -1,7 +1,7 @@
 # Competitive Benchmarking — Medical Tourism Platforms
 
-> Research conducted November 2026 for the EthAum hackathon.
-> Only information observable on public websites is included. Where something could not be verified, it is marked "not verified".
+> Research conducted November 2026 for the EthAum hackathon.  
+> Only information observable on public websites is included. Where something could not be verified, it is marked "[unverified - confirm before submitting]".
 
 ---
 
@@ -30,7 +30,7 @@
 
 ## 2. PlacidWay (placidway.com)
 
-**What it does:** A global medical tourism marketplace connecting patients directly with clinics in 60+ countries (unsourced). Operates a direct-to-provider model (not a broker). Serves self-paying patients seeking dental, bariatric, cosmetic, orthopaedic, and fertility treatments.
+**What it does:** A global medical tourism marketplace connecting patients directly with clinics in 60+ countries [unverified - confirm before submitting]. Operates a direct-to-provider model (not a broker). Serves self-paying patients seeking dental, bariatric, cosmetic, orthopaedic, and fertility treatments.
 
 **Patient journey:** Patient searches procedures and reviews clinic profiles with upfront pricing → submits a free quote request → clinic coordinator reviews records and schedules a virtual consultation → clinic sends a detailed treatment plan and quote → patient confirms appointment and pays a deposit directly to the clinic → travels (Booking.com integration for hotels) → treatment → leaves a review.
 
@@ -56,7 +56,7 @@
 
 ## 3. Medigo (medigo.com)
 
-**What it does:** Originally a Berlin-based "Booking.com for medical tourism" marketplace (founded 2013, unsourced). Has since pivoted to enterprise-focused Third-Party Administrator (TPA) and concierge services for international insurance members *(Verify before publishing)*. The consumer marketplace is no longer the primary product.
+**What it does:** Originally a Berlin-based "Booking.com for medical tourism" marketplace (founded 2013 [unverified - confirm before submitting]). Has since pivoted to enterprise-focused Third-Party Administrator (TPA) and concierge services for international insurance members [unverified - confirm before submitting]. The consumer marketplace is no longer the primary product.
 
 **Patient journey (original model):** Patient searched procedures and compared accredited clinics → uploaded medical records → platform matched patient with specialists → received a treatment plan and cost estimate → platform coordinated visa, flights, transfers, interpreter → patient travelled and was treated → received discharge summary → remote follow-up.
 
@@ -79,7 +79,7 @@
 
 ## 4. Healthtrip (healthtrip.com)
 
-**What it does:** An India-based medical tourism platform and mobile app connecting international patients with hospitals in India, Turkey, Thailand, Malaysia, Singapore, and the UAE. Serves patients seeking cardiac, orthopaedic, oncology, IVF, cosmetic, and transplant procedures.
+**What it does:** An India-based medical tourism platform and mobile app connecting international patients with hospitals in India, Turkey, Thailand, Malaysia, Singapore, and the UAE [unverified - confirm before submitting]. Serves patients seeking cardiac, orthopaedic, oncology, IVF, cosmetic, and transplant procedures.
 
 **Patient journey:** Patient explores treatments on web or app → uses cost estimator to review package pricing → uploads medical records → AI tool parses reports, case manager routes them to specialists → receives treatment plans and quotes from multiple hospitals → selects a hospital and books → dedicated travel consultant handles visa, flights, transfers, accommodation → local "companion" meets patient at airport → treatment → post-op recovery support → medical summaries transferred for domestic follow-up → patient app for ongoing health tracking.
 
@@ -92,7 +92,7 @@
 
 **Weaknesses to IMPROVE:**
 - AI use is not clearly scoped — no visible disclaimer separating coordination AI from medical advice.
-- Reviews on the platform were not verified against completed bookings on the public site (not verified).
+- Reviews on the platform were not verified against completed bookings on the public site [unverified - confirm before submitting].
 - Detailed patient record privacy dashboards and granular consent controls were not prominently displayed on public pages.
 - Aftercare coordination relies on the patient proactively using the app.
 
@@ -104,7 +104,7 @@
 
 ## 5. Apollo Hospitals International (apollohospitals.com)
 
-**What it does:** One of Asia's largest hospital groups, with JCI-accredited facilities across India. The International Patient Services (IPS) desk serves patients from 150+ countries (unsourced) seeking cardiology, oncology, orthopaedic, transplant, neuro, and fertility care.
+**What it does:** One of Asia's largest hospital groups, with JCI-accredited facilities across India. The International Patient Services (IPS) desk serves patients from 150+ countries [unverified - confirm before submitting] seeking cardiology, oncology, orthopaedic, transplant, neuro, and fertility care.
 
 **Patient journey:** Patient contacts IPS via website or WhatsApp → submits medical reports online → specialist team reviews and sends treatment plan with cost estimate → Apollo issues visa recommendation letter → patient travels (airport pickup arranged) → assigned a relationship manager and interpreter → treated at the hospital → receives discharge summary → teleconsultation follow-ups after returning home.
 
@@ -151,13 +151,13 @@
 
 ## 7. Bumrungrad International Hospital (bumrungrad.com)
 
-**What it does:** A premier private hospital in Bangkok, Thailand, with a reported 500,000+ international patients per year from 190+ countries (unsourced). Known for cardiology, orthopaedics, oncology, and wellness check-ups.
+**What it does:** A premier private hospital in Bangkok, Thailand, with a reported 500,000+ international patients per year from 190+ countries [unverified - confirm before submitting]. Known for cardiology, orthopaedics, oncology, and wellness check-ups.
 
-**Patient journey:** Patient contacts the hospital via website, email, or a global referral office → uploads medical history → specialist reviews and provides a cost estimate range → appointment scheduled before travel → visa and accommodation assistance → airport representative greets patient at Suvarnabhumi Airport → registration with free interpreter service (25+ languages, unsourced) → consultation and same-day diagnostics → treatment in hotel-grade facilities → discharge with translated records → fitness-to-fly clearance → teleconsultation follow-ups from home.
+**Patient journey:** Patient contacts the hospital via website, email, or a global referral office → uploads medical history → specialist reviews and provides a cost estimate range → appointment scheduled before travel → visa and accommodation assistance → airport representative greets patient at Suvarnabhumi Airport → registration with free interpreter service (25+ languages [unverified - confirm before submitting]) → consultation and same-day diagnostics → treatment in hotel-grade facilities → discharge with translated records → fitness-to-fly clearance → teleconsultation follow-ups from home.
 
 **Strengths to ADAPT:**
 - Airport counter at Bangkok's main airport — physical presence builds trust.
-- Free interpreter service in 25+ languages (unsourced).
+- Free interpreter service in 25+ languages [unverified - confirm before submitting].
 - Same-day diagnostics with on-campus labs.
 - Discharge records translated into the patient's language.
 - Hotel-grade inpatient rooms reduce patient anxiety.
@@ -180,7 +180,7 @@
 |---|---|---|---|---|---|---|---|
 | **Transparent pricing** | ❌ Directory only | ⚠️ Estimates, excludes extras | ❌ Enterprise pivot | ✅ Cost estimator | ❌ Quote on request | ❌ Quote on request | ⚠️ Range estimate |
 | **Verified hospitals** | ⚠️ Lists accreditations | ⚠️ Screens for JCI | ⚠️ Claimed JCI | ⚠️ Lists accreditations | ✅ Own JCI hospitals | ✅ Own JCI/NABH hospitals | ✅ Own JCI hospital |
-| **Quote comparison** | ❌ | ❌ | ❌ | ⚠️ Multiple quotes, no side-by-side tool (not verified) | ❌ Single hospital | ❌ Single hospital | ❌ Single hospital |
+| **Quote comparison** | ❌ | ❌ | ❌ | ⚠️ Multiple quotes, no side-by-side tool [unverified - confirm before submitting] | ❌ Single hospital | ❌ Single hospital | ❌ Single hospital |
 | **Record privacy** | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified |
 | **Aftercare** | ❌ Left to clinic | ❌ Limited | ❌ Reported gaps | ⚠️ App-based tracking | ✅ Teleconsultation | ✅ Teleconsultation | ✅ Teleconsultation |
 | **Referral programme** | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified |
@@ -210,7 +210,9 @@
 
 ---
 
-## Sources
+## Sources & Claims Requiring Verification
+
+### Public Domain Sources Reviewed
 
 | Site | URL | Accessed |
 |---|---|---|
@@ -223,3 +225,13 @@
 | Bumrungrad International | https://www.bumrungrad.com | Nov 2026 |
 | Trustpilot (PlacidWay reviews) | https://www.trustpilot.com | Nov 2026 |
 | Trustpilot (Medigo reviews) | https://www.trustpilot.com | Nov 2026 |
+
+### Claims Requiring Primary Source Verification Before Final Submission
+
+The following specific claims and metrics remain unverified and require primary source links (e.g., corporate registries, press releases, or official annual reports) before formal presentation:
+
+1. **PlacidWay**: The marketing claim of operating across `"60+ countries"` is self-reported and lacks audited clinic directory verification.
+2. **Medigo Founding & Pivot**: The claim that Medigo was founded in `2013` in Berlin and subsequently pivoted from a direct consumer marketplace to an enterprise/Third-Party Administrator (TPA) and concierge model for international insurance members is based on historical tech press reports and requires official corporate confirmation.
+3. **Healthtrip Geographic Reach**: The claim of active hospital provider networks across 6 specific countries (`India, Turkey, Thailand, Malaysia, Singapore, and the UAE`) needs verification against current active hospital partner agreements.
+4. **Apollo Hospitals Reach**: The claim of serving patients from `"150+ countries"` requires confirmation from Apollo Hospitals Enterprise Ltd. annual reports.
+5. **Bumrungrad Volume & Interpreter Capacity**: The claims of `"500,000+ international patients per year"`, intake from `"190+ countries"`, and an on-campus interpreter desk supporting `"25+ languages"` require citations from Bumrungrad Hospital Public Company Limited regulatory filings.
