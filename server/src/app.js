@@ -26,6 +26,7 @@ import {
   patientQuotesRoutes,
 } from './modules/quotes/quotes.routes.js';
 import hospitalPortalRoutes from './modules/hospitalPortal/hospitalPortal.routes.js';
+import adminRoutes from './modules/admin/admin.routes.js';
 
 const app = express();
 
@@ -102,6 +103,9 @@ app.use('/api/hospital', hospitalPortalRoutes);
 
 // Patient Quotation Actions
 app.use('/api/quotes', patientQuotesRoutes);
+
+// Admin Portal Protected Routes
+app.use('/api/admin', adminRoutes);
 
 // Root API index
 app.get('/api', (req, res) => {

@@ -119,10 +119,17 @@ export default function HospitalProfile() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-600" />
-                Verified Facility
-              </span>
+              {verified?.verificationStatus === 'APPROVED' && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-600" />
+                  Verified Facility
+                  {verified.verifiedAt && (
+                    <span className="ml-1 text-emerald-700 font-normal">
+                      &bull; Audited {new Date(verified.verifiedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}
+                    </span>
+                  )}
+                </span>
+              )}
               {providerReported.offersVirtualConsult && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200">
                   <Video className="h-3.5 w-3.5 mr-1 text-teal-600" />

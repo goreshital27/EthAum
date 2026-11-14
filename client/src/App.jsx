@@ -25,6 +25,12 @@ import HospitalProfileManage from './pages/hospital/HospitalProfileManage';
 import HospitalTreatments from './pages/hospital/HospitalTreatments';
 import HospitalDoctors from './pages/hospital/HospitalDoctors';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminApprovals from './pages/admin/AdminApprovals';
+import AdminCases from './pages/admin/AdminCases';
+import AdminReferrals from './pages/admin/AdminReferrals';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminUsers from './pages/admin/AdminUsers';
 
 export default function App() {
   return (
@@ -89,14 +95,22 @@ export default function App() {
             <Route path="treatments" element={<HospitalTreatments />} />
             <Route path="doctors" element={<HospitalDoctors />} />
           </Route>
+          {/* Protected Admin Portal Routes */}
           <Route
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
-                <AdminDashboard />
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<AdminApprovals />} />
+            <Route path="approvals" element={<AdminApprovals />} />
+            <Route path="cases" element={<AdminCases />} />
+            <Route path="referrals" element={<AdminReferrals />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="users" element={<AdminUsers />} />
+          </Route>
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
