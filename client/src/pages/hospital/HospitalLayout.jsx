@@ -35,6 +35,7 @@ export default function HospitalLayout() {
   const navItems = [
     { name: 'Dashboard', path: '/hospital', icon: LayoutDashboard, end: true },
     { name: 'Leads Inbox', path: '/hospital/leads', icon: Inbox },
+    { name: 'Bookings', path: '/hospital/bookings', icon: ShieldCheck },
     { name: 'Appointments', path: '/hospital/appointments', icon: CalendarCheck },
     { name: 'Profile', path: '/hospital/profile', icon: Building2 },
     { name: 'Treatments', path: '/hospital/treatments', icon: Stethoscope },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { formatCentsToUSD } from '../../utils/currency';
@@ -22,10 +22,12 @@ import {
   HelpCircle,
   UserCheck,
   Layers,
+  X,
 } from 'lucide-react';
 
 export default function QuoteComparison() {
   const { id: caseId } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Selected hospitals for shortlist (Set of hospitalIds)
@@ -33,6 +35,11 @@ export default function QuoteComparison() {
   const [callRequestedMap, setCallRequestedMap] = useState({});
   const [actionMessage, setActionMessage] = useState(null);
   const [actionError, setActionError] = useState(null);
+
+  // Booking Modal State
+  const [bookingModalQuote, setBookingModalQuote] = useState(null);
+  const [referralCodeInput, setReferralCodeInput] = useState('');
+  const [bookingError, setBookingError] = useState(null);
 
   // AI polling state
   const [aiJobId, setAiJobId] = useState(null);
@@ -181,6 +188,25 @@ export default function QuoteComparison() {
     onError: (err) => {
       setIsGeneratingAi(false);
       setAiError(err.response?.data?.message || 'Failed to start AI quote comparison');
+    },
+  });
+
+  // Mutation: Create Booking from Quotation
+  const createBookingMutation = useMutation({
+    mutationFn: async ({ quotationId, referralCode }) => {
+      setBookingError(null);
+      const res = await api.post('/bookings', {
+        quotationId,
+        referralCode: referralCode || undefined,
+      });
+      return res.data?.data;
+    },
+    onSuccess: (booking) => {
+      setBookingModalQuote(null);
+      navigate(`/patient/bookings/${booking.id}/pay`);
+    },
+    onError: (err) => {
+      setBookingError(err.response?.data?.message || 'Failed to create booking');
     },
   });
 
@@ -616,6 +642,21 @@ export default function QuoteComparison() {
                               </span>
                             </button>
                           )}
+
+                          {/* Book this hospital Button */}
+                          {!quote.isExpired && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setBookingModalQuote(quote);
+                                setBookingError(null);
+                              }}
+                              className="w-full inline-flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 transition-colors shadow-2xs"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <span>Book this hospital</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -757,6 +798,103 @@ export default function QuoteComparison() {
               )}
             </section>
           </>
+        )}
+
+        {/* Final Selection Booking Confirm Dialog */}
+        {bookingModalQuote && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 text-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="space-y-0.5">
+                  <span className="text-2xs font-bold text-teal-700 uppercase tracking-wider block">
+                    Final Selection &bull; Booking Confirmation
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Book {bookingModalQuote.hospital?.name}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBookingModalQuote(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {bookingError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-2xs text-rose-800 flex items-center space-x-2">
+                  <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                  <span>{bookingError}</span>
+                </div>
+              )}
+
+              {/* Financial Breakdown */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">All-in Quotation Total:</span>
+                  <span className="font-bold text-slate-900">
+                    {formatCentsToUSD(bookingModalQuote.totalCents)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-teal-800 font-extrabold text-sm pt-2 border-t border-slate-200">
+                  <span>20% Escrow Deposit Required:</span>
+                  <span>
+                    {formatCentsToUSD(Math.round(bookingModalQuote.totalCents * 0.2))}
+                  </span>
+                </div>
+                <div className="flex justify-between text-2xs text-slate-500 pt-1">
+                  <span>Remaining 80% (upon hospital admission):</span>
+                  <span>
+                    {formatCentsToUSD(
+                      bookingModalQuote.totalCents -
+                        Math.round(bookingModalQuote.totalCents * 0.2)
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Optional Referral Code */}
+              <div className="space-y-1">
+                <label className="text-2xs font-bold text-slate-600 uppercase tracking-wider block">
+                  Affiliate Referral Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={referralCodeInput}
+                  onChange={(e) => setReferralCodeInput(e.target.value)}
+                  placeholder="e.g. REF-MARCUS-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-teal-500"
+                />
+                <p className="text-3xs text-slate-400">
+                  If referred by another patient, enter their code to qualify their 5% referral commission.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBookingModalQuote(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={createBookingMutation.isLoading}
+                  onClick={() =>
+                    createBookingMutation.mutate({
+                      quotationId: bookingModalQuote.id,
+                      referralCode: referralCodeInput.trim() || undefined,
+                    })
+                  }
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 disabled:opacity-50 transition-colors shadow-xs"
+                >
+                  {createBookingMutation.isLoading ? 'Reserving...' : 'Proceed to Escrow Deposit'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>

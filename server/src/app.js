@@ -30,6 +30,7 @@ import adminRoutes from './modules/admin/admin.routes.js';
 import consultationsRoutes from './modules/consultations/consultations.routes.js';
 import messagesRoutes from './modules/messages/messages.routes.js';
 import notificationsRoutes from './modules/notifications/notifications.routes.js';
+import bookingsRoutes from './modules/bookings/bookings.routes.js';
 
 const app = express();
 
@@ -110,6 +111,9 @@ app.use('/api/quotes', patientQuotesRoutes);
 // Consultations & Tele-Appointments
 app.use('/api/appointments', consultationsRoutes);
 app.use('/api/hospital/appointments', consultationsRoutes);
+
+// Bookings & Escrow Deposits
+app.use('/api/bookings', bookingsRoutes);
 
 // Direct Case Messages / Chat
 app.use('/api/cases/:caseId/messages', messagesRoutes);

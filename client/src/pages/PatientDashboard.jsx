@@ -47,6 +47,16 @@ export default function PatientDashboard() {
     },
   });
 
+  // Fetch patient bookings
+  const { data: bookingsResponse } = useQuery({
+    queryKey: ['patientDashboardBookings'],
+    queryFn: async () => {
+      const res = await api.get('/bookings');
+      return res.data?.data || [];
+    },
+  });
+
+  const bookings = bookingsResponse || [];
   const cases = casesResponse || [];
   const activeCases = cases.filter((c) => c.stage !== 'CLOSED');
   const pastCases = cases.filter((c) => c.stage === 'CLOSED');
@@ -289,6 +299,93 @@ export default function PatientDashboard() {
                 </div>
               </div>
             </section>
+
+            {/* My Bookings Section */}
+            {bookings.length > 0 && (
+              <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-5 w-5 text-teal-700" />
+                    <h2 className="text-base font-bold text-slate-900">
+                      My Hospital Bookings ({bookings.length})
+                    </h2>
+                  </div>
+                  <span className="text-2xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+                    Escrow Protected
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {bookings.map((b) => {
+                    const isConfirmed = b.status === 'CONFIRMED';
+                    const paidPayment = b.payments?.find((p) => p.status === 'PAID');
+                    const depositAmount = paidPayment?.amountCents || b.bookingFeeCents;
+
+                    return (
+                      <div
+                        key={b.id}
+                        className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-3 flex flex-col justify-between"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-2xs font-extrabold ${
+                                isConfirmed
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                  : 'bg-amber-50 text-amber-800 border border-amber-200'
+                              }`}
+                            >
+                              {isConfirmed ? 'CONFIRMED' : 'PENDING DEPOSIT'}
+                            </span>
+                            <span className="text-2xs text-slate-400">
+                              Ref #{b.id.slice(0, 8)}
+                            </span>
+                          </div>
+
+                          <h3 className="text-sm font-bold text-slate-900">
+                            {b.hospital?.name}
+                          </h3>
+                          <p className="text-xs text-slate-500">
+                            {b.case?.treatment?.name || b.case?.treatmentNeed} &bull; {b.hospital?.city}, {b.hospital?.country}
+                          </p>
+
+                          <div className="flex justify-between text-xs pt-1">
+                            <span className="text-slate-500">Total / Deposit:</span>
+                            <span className="font-bold text-slate-900">
+                              {formatCentsToUSD(b.quotation?.totalCents)} (Dep: {formatCentsToUSD(depositAmount)})
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 pt-2 border-t border-slate-200/60">
+                          {isConfirmed ? (
+                            <Link
+                              to={`/patient/bookings/${b.id}/confirmation`}
+                              className="flex-1 text-center py-2 px-3 rounded-lg text-xs font-bold bg-teal-700 text-white hover:bg-teal-800 transition-colors"
+                            >
+                              View Confirmation
+                            </Link>
+                          ) : (
+                            <Link
+                              to={`/patient/bookings/${b.id}/pay`}
+                              className="flex-1 text-center py-2 px-3 rounded-lg text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+                            >
+                              Pay Deposit (Demo)
+                            </Link>
+                          )}
+                          <Link
+                            to={`/patient/cases/${b.caseId}`}
+                            className="py-2 px-3 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
+                          >
+                            Case
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             {/* List of My Cases */}
             <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
