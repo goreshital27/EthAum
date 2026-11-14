@@ -5,6 +5,7 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { formatCentsToUSD } from '../utils/currency';
 import AIDisclaimer from '../components/AIDisclaimer';
+import NotificationBell from '../components/NotificationBell';
 import { STAGE_META } from '../components/StageTracker';
 import {
   HeartPulse,
@@ -82,6 +83,7 @@ export default function PatientDashboard() {
           </div>
 
           <div className="flex items-center space-x-3">
+            <NotificationBell />
             <AIDisclaimer className="hidden md:inline-flex" />
 
             <div className="text-right hidden sm:block pl-2 border-l border-slate-200">

@@ -321,7 +321,10 @@ export const hospitalPortalService = {
     ]);
 
     const formattedLeads = enquiries.map((enq) => {
-      const isQuoteSent = enq.status === 'RESPONDED';
+      const isQuoteSent =
+        enq.status === 'RESPONDED' ||
+        (enq.quotations &&
+          enq.quotations.some((q) => ['SENT', 'ACCEPTED', 'REJECTED'].includes(q.status)));
       const patient = enq.case?.patient;
       const patientProfile = patient?.patientProfile;
 
@@ -343,16 +346,18 @@ export const hospitalPortalService = {
         },
         country: patientProfile?.country || enq.case.destination?.country || 'International',
         stage: enq.case.stage,
-        // Patient Privacy: No name or email until a quote has been sent
+        // Patient Privacy: No name, email, or phone until a quote has been sent
         patient: isQuoteSent
           ? {
               name: patientProfile?.fullName || 'Patient',
               email: patient?.email || null,
+              phone: patientProfile?.phone || null,
               isRevealed: true,
             }
           : {
               name: 'Confidential Patient',
               email: null,
+              phone: null,
               isRevealed: false,
             },
         quotationsCount: enq.quotations.length,
@@ -396,6 +401,7 @@ export const hospitalPortalService = {
                     fullName: true,
                     country: true,
                     language: true,
+                    phone: true,
                   },
                 },
               },
@@ -471,7 +477,10 @@ export const hospitalPortalService = {
       }));
     }
 
-    const isQuoteSent = enquiry.status === 'RESPONDED';
+    const isQuoteSent =
+      enquiry.status === 'RESPONDED' ||
+      (enquiry.quotations &&
+        enquiry.quotations.some((q) => ['SENT', 'ACCEPTED', 'REJECTED'].includes(q.status)));
 
     return {
       id: enquiry.id,
@@ -502,11 +511,13 @@ export const hospitalPortalService = {
           ? {
               name: enquiry.case.patient?.patientProfile?.fullName || 'Patient',
               email: enquiry.case.patient?.email,
+              phone: enquiry.case.patient?.patientProfile?.phone || null,
               isRevealed: true,
             }
           : {
               name: 'Confidential Patient',
               email: null,
+              phone: null,
               isRevealed: false,
             },
       },

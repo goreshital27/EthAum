@@ -27,6 +27,9 @@ import {
 } from './modules/quotes/quotes.routes.js';
 import hospitalPortalRoutes from './modules/hospitalPortal/hospitalPortal.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import consultationsRoutes from './modules/consultations/consultations.routes.js';
+import messagesRoutes from './modules/messages/messages.routes.js';
+import notificationsRoutes from './modules/notifications/notifications.routes.js';
 
 const app = express();
 
@@ -103,6 +106,16 @@ app.use('/api/hospital', hospitalPortalRoutes);
 
 // Patient Quotation Actions
 app.use('/api/quotes', patientQuotesRoutes);
+
+// Consultations & Tele-Appointments
+app.use('/api/appointments', consultationsRoutes);
+app.use('/api/hospital/appointments', consultationsRoutes);
+
+// Direct Case Messages / Chat
+app.use('/api/cases/:caseId/messages', messagesRoutes);
+
+// User Notifications
+app.use('/api/notifications', notificationsRoutes);
 
 // Admin Portal Protected Routes
 app.use('/api/admin', adminRoutes);

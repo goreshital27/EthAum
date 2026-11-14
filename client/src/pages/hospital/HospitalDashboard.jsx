@@ -63,10 +63,23 @@ export default function HospitalDashboard() {
     },
   });
 
+  // 4. Fetch real confirmed upcoming appointments
+  const {
+    data: appointmentsData = [],
+    isLoading: isApptsLoading,
+  } = useQuery({
+    queryKey: ['hospitalUpcomingAppointmentsCount'],
+    queryFn: async () => {
+      const res = await api.get('/appointments?status=CONFIRMED');
+      return res.data?.data || [];
+    },
+    enabled: !isPending,
+  });
+
   const totalLeads = leadsData?.total || 0;
   const newLeadsCount = leadsData?.leads?.filter((l) => l.status === 'NEW').length || 0;
   const quotesSentCount = quotesData?.pagination?.total || 0;
-  const upcomingAppointmentsCount = 0; // Explicit requirement: appointments show 0 for now
+  const upcomingAppointmentsCount = appointmentsData.length;
 
   const recentLeads = leadsData?.leads || [];
 
@@ -148,7 +161,10 @@ export default function HospitalDashboard() {
         </div>
 
         {/* Metric 3: Upcoming Appointments */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <Link
+          to="/hospital/appointments"
+          className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:border-indigo-300 transition-colors block"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Upcoming Consultations
@@ -158,12 +174,12 @@ export default function HospitalDashboard() {
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
-            {upcomingAppointmentsCount}
+            {isPending ? '—' : isApptsLoading ? '...' : upcomingAppointmentsCount}
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            Exploratory video coordination (coming soon)
+            Confirmed exploratory &amp; formal calls
           </p>
-        </div>
+        </Link>
       </div>
 
       {/* Quick Action Navigation Grid */}

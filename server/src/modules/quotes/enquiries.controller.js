@@ -1,5 +1,6 @@
 import prisma from '../../config/prisma.js';
 import { enforceStageTransition } from '../cases/stagePipeline.js';
+import { createNotification } from '../notifications/notifications.service.js';
 
 /**
  * Helper to fetch and verify the hospital associated with a logged-in HOSPITAL user.
@@ -568,6 +569,20 @@ export async function createCaseEnquiry(req, res, next) {
         createdCount: createdEnquiries.length,
       };
     });
+
+    // Notify target hospitals of new lead
+    for (const enq of result.enquiries) {
+      const targetHospital = approvedHospitals.find((h) => h.id === enq.hospitalId);
+      if (targetHospital?.ownerId) {
+        await createNotification({
+          userId: targetHospital.ownerId,
+          type: 'NEW_LEAD',
+          title: 'New Patient Inquiry',
+          body: 'A patient has submitted a new inquiry for case coordination.',
+          link: `/hospital/leads/${enq.id}`,
+        });
+      }
+    }
 
     return res.status(201).json({
       status: 'ok',

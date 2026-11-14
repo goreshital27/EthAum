@@ -6,6 +6,8 @@ import { formatCentsToUSD } from '../../utils/currency';
 import StageTracker from '../../components/StageTracker';
 import AIDisclaimer from '../../components/AIDisclaimer';
 import AICoordinationPanel from '../../components/AICoordinationPanel';
+import NotificationBell from '../../components/NotificationBell';
+import ChatPanel from '../../components/ChatPanel';
 import {
   ArrowLeft,
   FileText,
@@ -22,6 +24,10 @@ import {
   Calendar,
   XCircle,
   Plus,
+  Video,
+  ExternalLink,
+  MessageSquare,
+  CalendarCheck,
 } from 'lucide-react';
 
 export default function CaseDetail() {
@@ -122,6 +128,68 @@ export default function CaseDetail() {
     },
   });
 
+  // 6. Fetch Live Case Appointments
+  const {
+    data: appointments = [],
+    isLoading: isApptsLoading,
+  } = useQuery({
+    queryKey: ['caseAppointments', caseId],
+    queryFn: async () => {
+      const res = await api.get(`/appointments?caseId=${caseId}`);
+      return res.data?.data || [];
+    },
+    enabled: Boolean(caseId),
+  });
+
+  const [apptActionFeedback, setApptActionFeedback] = useState('');
+  const [selectedChatHospitalId, setSelectedChatHospitalId] = useState('');
+
+  // 7. Accept Appointment Mutation
+  const acceptApptMutation = useMutation({
+    mutationFn: async (appointmentId) => {
+      const res = await api.post(`/appointments/${appointmentId}/accept`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['caseDetail', caseId]);
+      queryClient.invalidateQueries(['caseAppointments', caseId]);
+      queryClient.invalidateQueries(['myNotifications']);
+      setApptActionFeedback('Consultation slot confirmed! You can now join the call at the scheduled time.');
+      setTimeout(() => setApptActionFeedback(''), 5000);
+    },
+    onError: (err) => {
+      alert(err.response?.data?.message || 'Failed to accept consultation slot');
+    },
+  });
+
+  // 8. Decline Appointment Mutation
+  const declineApptMutation = useMutation({
+    mutationFn: async (appointmentId) => {
+      const res = await api.post(`/appointments/${appointmentId}/decline`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['caseDetail', caseId]);
+      queryClient.invalidateQueries(['caseAppointments', caseId]);
+      queryClient.invalidateQueries(['myNotifications']);
+      setApptActionFeedback('Consultation declined.');
+      setTimeout(() => setApptActionFeedback(''), 5000);
+    },
+    onError: (err) => {
+      alert(err.response?.data?.message || 'Failed to decline consultation');
+    },
+  });
+
+  // Participating hospitals for chat
+  const participatingHospitals = (caseItem?.enquiries || [])
+    .map((e) => e.hospital)
+    .filter(Boolean);
+
+  const activeChatHospitalId =
+    selectedChatHospitalId || (participatingHospitals.length > 0 ? participatingHospitals[0].id : null);
+  const activeChatHospital =
+    participatingHospitals.find((h) => h.id === activeChatHospitalId) || participatingHospitals[0];
+
   // Handle Document View (fetches signed URL and opens in new window)
   const handleViewDocument = async (docId) => {
     try {
@@ -207,7 +275,10 @@ export default function CaseDetail() {
             <ArrowLeft className="h-4 w-4" />
             <span>Dashboard</span>
           </Link>
-          <AIDisclaimer />
+          <div className="flex items-center space-x-3">
+            <NotificationBell />
+            <AIDisclaimer />
+          </div>
         </div>
       </header>
 
@@ -284,6 +355,206 @@ export default function CaseDetail() {
           caseStage={caseItem.stage}
           approvedHospitals={approvedHospitals}
         />
+
+        {/* Video Consultations & Exploratory Calls Section */}
+        <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                <Video className="h-5 w-5 text-teal-700" />
+                <span>Tele-Consultations &amp; Video Coordination</span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Join exploratory intake calls or pre-admission clinical reviews with hospital specialists via secure video.
+              </p>
+            </div>
+            <span className="text-xs font-semibold bg-teal-50 text-teal-800 px-3 py-1 rounded-full border border-teal-200 self-start sm:self-auto">
+              {appointments.filter((a) => a.status === 'CONFIRMED').length} Confirmed
+            </span>
+          </div>
+
+          {apptActionFeedback && (
+            <div className="flex items-center space-x-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>{apptActionFeedback}</span>
+            </div>
+          )}
+
+          {isApptsLoading ? (
+            <div className="py-8 text-center text-slate-400 text-xs">Loading consultations...</div>
+          ) : appointments.length === 0 ? (
+            <div className="p-8 text-center space-y-2 bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+              <Video className="h-8 w-8 text-slate-300 mx-auto" />
+              <p className="text-xs font-bold text-slate-700">No Consultations Scheduled Yet</p>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Accredited partner hospitals will propose 1 to 3 time slots for exploratory video calls after evaluating your case inquiry.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {appointments.map((appt) => {
+                const isConfirmed = appt.status === 'CONFIRMED';
+                const isRequested = appt.status === 'REQUESTED';
+                const isCancelled = appt.status === 'CANCELLED';
+                const isCompleted = appt.status === 'COMPLETED';
+
+                const statusBadge = {
+                  REQUESTED: 'bg-amber-50 text-amber-800 border-amber-200',
+                  CONFIRMED: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                  COMPLETED: 'bg-blue-50 text-blue-800 border-blue-200',
+                  CANCELLED: 'bg-slate-100 text-slate-500 border-slate-200',
+                }[appt.status] || 'bg-slate-100 text-slate-600';
+
+                return (
+                  <div
+                    key={appt.id}
+                    className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs transition-colors hover:bg-slate-50/90"
+                  >
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center space-x-2 flex-wrap gap-1">
+                        <span className="font-bold text-slate-900 text-sm">
+                          {new Date(appt.scheduledAt).toLocaleDateString(undefined, {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}{' '}
+                          at{' '}
+                          {new Date(appt.scheduledAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          ({appt.timezone || 'UTC'})
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                          {appt.type}
+                        </span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge}`}>
+                          {appt.status}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-3 text-slate-600 flex-wrap gap-y-1">
+                        <span className="inline-flex items-center space-x-1 font-semibold text-slate-800">
+                          <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                          <span>{appt.hospital?.name}</span>
+                        </span>
+                        {appt.doctor?.name && (
+                          <span>&bull; Specialist: Dr. {appt.doctor.name} ({appt.doctor.specialty})</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center space-x-2 self-start md:self-center shrink-0">
+                      {isConfirmed && appt.videoLink && (
+                        <a
+                          href={appt.videoLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors"
+                        >
+                          <Video className="h-3.5 w-3.5" />
+                          <span>Join Video Call</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+
+                      {isRequested && (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            disabled={acceptApptMutation.isLoading || declineApptMutation.isLoading}
+                            onClick={() => acceptApptMutation.mutate(appt.id)}
+                            className="inline-flex items-center space-x-1 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 shadow-sm transition-colors disabled:opacity-50"
+                          >
+                            <CalendarCheck className="h-3.5 w-3.5" />
+                            <span>Accept Slot</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={acceptApptMutation.isLoading || declineApptMutation.isLoading}
+                            onClick={() => declineApptMutation.mutate(appt.id)}
+                            className="inline-flex items-center space-x-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-300 transition-colors disabled:opacity-50"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            <span>Decline</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {(isCancelled || isCompleted) && (
+                        <span className="text-slate-400 text-xs italic">
+                          {isCancelled ? 'Slot cancelled' : 'Call completed'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Direct Coordination Messages Thread */}
+        <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                <MessageSquare className="h-5 w-5 text-teal-700" />
+                <span>Hospital Coordination Messaging</span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Direct messaging with accredited partner hospitals regarding logistics, records, and treatment details.
+              </p>
+            </div>
+          </div>
+
+          {participatingHospitals.length === 0 ? (
+            <div className="p-8 text-center space-y-2 bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+              <MessageSquare className="h-8 w-8 text-slate-300 mx-auto" />
+              <p className="text-xs font-bold text-slate-700">No Active Hospital Threads</p>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Request quotations from partner hospitals above to open direct messaging threads.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Hospital Selection Tabs if multiple */}
+              {participatingHospitals.length > 1 && (
+                <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs font-semibold border-b border-slate-100">
+                  <span className="text-slate-400 text-[11px] uppercase tracking-wider mr-1">Select Hospital:</span>
+                  {participatingHospitals.map((h) => {
+                    const isSelected = activeChatHospital?.id === h.id;
+                    return (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() => setSelectedChatHospitalId(h.id)}
+                        className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
+                          isSelected
+                            ? 'bg-teal-700 text-white shadow-2xs'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        <Building2 className="h-3 w-3" />
+                        <span>{h.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {activeChatHospital && (
+                <ChatPanel
+                  caseId={caseId}
+                  hospitalId={activeChatHospital.id}
+                  hospitalName={activeChatHospital.name}
+                />
+              )}
+            </div>
+          )}
+        </section>
 
         {/* Document Records & Upload Section */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">

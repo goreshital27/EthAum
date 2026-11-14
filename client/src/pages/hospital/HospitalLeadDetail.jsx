@@ -3,6 +3,7 @@ import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { getFullFileUrl } from '../../api/axios';
 import { formatCentsToUSD } from '../../utils/currency';
+import ChatPanel from '../../components/ChatPanel';
 import {
   ArrowLeft,
   Inbox,
@@ -13,6 +14,7 @@ import {
   Plus,
   Trash2,
   Calendar,
+  CalendarCheck,
   Clock,
   Building2,
   UserCheck,
@@ -23,6 +25,10 @@ import {
   DollarSign,
   HelpCircle,
   Sparkles,
+  Video,
+  ExternalLink,
+  MessageSquare,
+  X,
 } from 'lucide-react';
 
 export default function HospitalLeadDetail() {
@@ -57,6 +63,70 @@ export default function HospitalLeadDetail() {
   });
 
   const doctors = profileData?.doctors || [];
+
+  // 2b. Fetch appointments for this case
+  const { data: caseAppointments = [], refetch: refetchAppts } = useQuery({
+    queryKey: ['leadCaseAppointments', leadData?.caseId],
+    queryFn: async () => {
+      const res = await api.get(`/appointments?caseId=${leadData.caseId}`);
+      return res.data?.data || [];
+    },
+    enabled: Boolean(leadData?.caseId),
+  });
+
+  // Appointment Proposal State
+  const [showApptModal, setShowApptModal] = useState(false);
+  const [apptType, setApptType] = useState('EXPLORATORY');
+  const [apptSlot1, setApptSlot1] = useState('');
+  const [apptSlot2, setApptSlot2] = useState('');
+  const [apptSlot3, setApptSlot3] = useState('');
+  const [apptDoctorId, setApptDoctorId] = useState('');
+  const [apptError, setApptError] = useState('');
+  const [apptSuccess, setApptSuccess] = useState('');
+
+  const proposeApptMutation = useMutation({
+    mutationFn: async (payload) => {
+      setApptError('');
+      const res = await api.post('/appointments/propose', payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      refetchAppts();
+      setShowApptModal(false);
+      setApptSlot1('');
+      setApptSlot2('');
+      setApptSlot3('');
+      setApptSuccess('Consultation time slots successfully proposed to the patient.');
+      setTimeout(() => setApptSuccess(''), 5000);
+    },
+    onError: (err) => {
+      setApptError(err.response?.data?.message || err.message || 'Failed to propose appointment');
+    },
+  });
+
+  const handleProposeApptSubmit = (e) => {
+    e.preventDefault();
+    setApptError('');
+    const rawSlots = [apptSlot1, apptSlot2, apptSlot3].filter(Boolean);
+    if (rawSlots.length === 0) {
+      setApptError('Please provide at least 1 proposed time slot.');
+      return;
+    }
+    const isoSlots = rawSlots.map((s) => new Date(s).toISOString());
+    const now = new Date();
+    if (isoSlots.some((s) => new Date(s) <= now)) {
+      setApptError('All appointment slots must be scheduled in the future.');
+      return;
+    }
+
+    proposeApptMutation.mutate({
+      caseId: leadData.caseId,
+      doctorId: apptDoctorId || null,
+      type: apptType,
+      slots: isoSlots,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    });
+  };
 
   // Quote Builder State
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
@@ -805,6 +875,249 @@ export default function HospitalLeadDetail() {
           </button>
         </div>
       </div>
+
+      {/* Video Consultations Section (Requirement 1 & 2) */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+              <CalendarCheck className="h-5 w-5 text-indigo-600" />
+              <span>Tele-Consultations &amp; Video Coordination</span>
+            </h2>
+            <p className="text-xs text-slate-500">
+              Propose exploratory calls or formal pre-travel medical reviews with secure Jitsi video links.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowApptModal(true);
+              setApptError('');
+            }}
+            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors self-start sm:self-auto"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Propose Appointment</span>
+          </button>
+        </div>
+
+        {apptSuccess && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center space-x-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>{apptSuccess}</span>
+          </div>
+        )}
+
+        {caseAppointments.length === 0 ? (
+          <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2">
+            <Video className="h-8 w-8 text-slate-300 mx-auto" />
+            <p className="text-xs font-semibold text-slate-700">No consultations scheduled for this case</p>
+            <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+              Propose 1 to 3 time slots for an exploratory call to discuss clinical prerequisites and travel timing with the patient.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {caseAppointments.map((appt) => {
+              const isConfirmed = appt.status === 'CONFIRMED';
+              const isRequested = appt.status === 'REQUESTED';
+
+              const statusBadge = {
+                REQUESTED: 'bg-amber-50 text-amber-700 border-amber-200',
+                CONFIRMED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                COMPLETED: 'bg-blue-50 text-blue-700 border-blue-200',
+                CANCELLED: 'bg-slate-100 text-slate-600 border-slate-200',
+              }[appt.status] || 'bg-slate-100 text-slate-600';
+
+              return (
+                <div
+                  key={appt.id}
+                  className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2 flex-wrap gap-1">
+                      <span className="font-bold text-slate-900 text-sm">
+                        {new Date(appt.scheduledAt).toLocaleDateString([], {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}{' '}
+                        at{' '}
+                        {new Date(appt.scheduledAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        ({appt.timezone || 'UTC'})
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {appt.type}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge}`}
+                      >
+                        {appt.status}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-500">
+                      {appt.doctor?.name ? `Specialist: ${appt.doctor.name}` : 'Facility Medical Team'}
+                    </p>
+                  </div>
+
+                  {isConfirmed && appt.videoLink ? (
+                    <a
+                      href={appt.videoLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors self-start sm:self-auto"
+                    >
+                      <Video className="h-3.5 w-3.5" />
+                      <span>Join Call</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : isRequested ? (
+                    <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 self-start sm:self-auto">
+                      Awaiting Patient Slot Selection
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Direct Coordination Chat Thread (Requirement 3) */}
+      <ChatPanel
+        caseId={leadData.caseId}
+        hospitalId={profileData?.id}
+        hospitalName={profileData?.name}
+      />
+
+      {/* Propose Appointment Modal */}
+      {showApptModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <CalendarCheck className="h-5 w-5 text-indigo-600" />
+                <span>Propose Tele-Consultation</span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowApptModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {apptError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold flex items-center space-x-2">
+                <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+                <span>{apptError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleProposeApptSubmit} className="space-y-4">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Consultation Type
+                </label>
+                <select
+                  value={apptType}
+                  onChange={(e) => setApptType(e.target.value)}
+                  className="w-full py-2 px-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500 font-semibold"
+                >
+                  <option value="EXPLORATORY">EXPLORATORY (Preliminary Case Review &amp; Intake)</option>
+                  <option value="FORMAL">FORMAL (Pre-admission Clinical Review - Requires Booking)</option>
+                </select>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  EXPLORATORY calls move case to CONSULTATION upon patient acceptance.
+                </span>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Assigned Specialist Doctor (Optional)
+                </label>
+                <select
+                  value={apptDoctorId}
+                  onChange={(e) => setApptDoctorId(e.target.value)}
+                  className="w-full py-2 px-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">-- Facility Medical Coordination Team --</option>
+                  {doctors.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.specialty})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block font-bold text-slate-700">
+                  Proposed Time Slots (1 to 3 slots in the future) *
+                </label>
+
+                <div>
+                  <span className="text-[11px] text-slate-500 block mb-0.5">Slot 1 (Primary):</span>
+                  <input
+                    type="datetime-local"
+                    value={apptSlot1}
+                    onChange={(e) => setApptSlot1(e.target.value)}
+                    className="w-full py-2 px-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <span className="text-[11px] text-slate-500 block mb-0.5">Slot 2 (Alternative - Optional):</span>
+                  <input
+                    type="datetime-local"
+                    value={apptSlot2}
+                    onChange={(e) => setApptSlot2(e.target.value)}
+                    className="w-full py-2 px-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <span className="text-[11px] text-slate-500 block mb-0.5">Slot 3 (Alternative - Optional):</span>
+                  <input
+                    type="datetime-local"
+                    value={apptSlot3}
+                    onChange={(e) => setApptSlot3(e.target.value)}
+                    className="w-full py-2 px-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-[11px] text-indigo-900">
+                A secure end-to-end encrypted Jitsi video conference link will be automatically generated.
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowApptModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={proposeApptMutation.isLoading}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-sm"
+                >
+                  {proposeApptMutation.isLoading ? 'Proposing...' : 'Propose Slots'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from '../../components/NotificationBell';
 import {
   Building2,
   LayoutDashboard,
   Inbox,
+  CalendarCheck,
   UserCheck,
   Stethoscope,
   Users,
@@ -33,6 +35,7 @@ export default function HospitalLayout() {
   const navItems = [
     { name: 'Dashboard', path: '/hospital', icon: LayoutDashboard, end: true },
     { name: 'Leads Inbox', path: '/hospital/leads', icon: Inbox },
+    { name: 'Appointments', path: '/hospital/appointments', icon: CalendarCheck },
     { name: 'Profile', path: '/hospital/profile', icon: Building2 },
     { name: 'Treatments', path: '/hospital/treatments', icon: Stethoscope },
     { name: 'Doctors', path: '/hospital/doctors', icon: Users },
@@ -61,8 +64,10 @@ export default function HospitalLayout() {
               <span>AI-assisted coordination, not medical advice</span>
             </div>
 
-            {/* Right: Hospital Identity & Logout & Mobile Toggle */}
+            {/* Right: Notification Bell & Hospital Identity & Logout & Mobile Toggle */}
             <div className="flex items-center space-x-3">
+              <NotificationBell />
+
               <div className="text-right hidden md:block">
                 <p className="text-xs font-bold text-slate-900 truncate max-w-[200px]">
                   {user?.hospital?.name || user?.name || 'Hospital Admin'}
