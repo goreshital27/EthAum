@@ -1,4 +1,5 @@
 import prisma from '../../config/prisma.js';
+import { enforceStageTransition } from '../cases/stagePipeline.js';
 
 /**
  * Helper to get and verify the approved hospital for the current user
@@ -57,9 +58,7 @@ export async function createQuotation(req, res, next) {
     const {
       doctorId,
       lineItems,
-      subtotalCents,
       taxCents = 0,
-      totalCents,
       currency = 'USD',
       validUntil,
       paymentSchedule,
@@ -67,6 +66,14 @@ export async function createQuotation(req, res, next) {
       notes,
       status = 'DRAFT',
     } = req.body;
+
+    // Server authoritatively computes subtotal and total from lineItems, never trusting client totals
+    const subtotalCents = lineItems.reduce(
+      (sum, item) => sum + (Number.isInteger(item.amountCents) ? item.amountCents : 0),
+      0
+    );
+    const validTaxCents = Number.isInteger(taxCents) && taxCents >= 0 ? taxCents : 0;
+    const totalCents = subtotalCents + validTaxCents;
 
     // Verify doctor belongs to this hospital if doctorId provided
     if (doctorId) {
@@ -89,7 +96,7 @@ export async function createQuotation(req, res, next) {
           doctorId: doctorId || null,
           lineItems,
           subtotalCents,
-          taxCents,
+          taxCents: validTaxCents,
           totalCents,
           currency,
           validUntil: validUntil ? new Date(validUntil) : null,
@@ -116,10 +123,12 @@ export async function createQuotation(req, res, next) {
           data: { status: 'RESPONDED' },
         });
 
+        // The case moves to QUOTE_SENT only when a hospital sends its first quote (via enforceStageTransition)
         if (enquiry.case.stage === 'QUOTE_REQUESTED') {
+          const nextStage = enforceStageTransition(enquiry.case.stage, 'QUOTE_SENT');
           await tx.medicalCase.update({
             where: { id: enquiry.caseId },
-            data: { stage: 'QUOTE_SENT' },
+            data: { stage: nextStage },
           });
         }
       }
@@ -308,9 +317,7 @@ export async function updateHospitalQuote(req, res, next) {
     const {
       doctorId,
       lineItems,
-      subtotalCents,
       taxCents,
-      totalCents,
       currency,
       validUntil,
       paymentSchedule,
@@ -330,14 +337,35 @@ export async function updateHospitalQuote(req, res, next) {
       }
     }
 
+    // Server authoritatively recalculates subtotal and total from line items if updated
+    let computedSubtotal = undefined;
+    let computedTax = undefined;
+    let computedTotal = undefined;
+
+    if (lineItems !== undefined) {
+      computedSubtotal = lineItems.reduce(
+        (sum, item) => sum + (Number.isInteger(item.amountCents) ? item.amountCents : 0),
+        0
+      );
+      computedTax =
+        taxCents !== undefined
+          ? (Number.isInteger(taxCents) && taxCents >= 0 ? taxCents : 0)
+          : (quote.taxCents || 0);
+      computedTotal = computedSubtotal + computedTax;
+    } else if (taxCents !== undefined) {
+      computedTax = Number.isInteger(taxCents) && taxCents >= 0 ? taxCents : 0;
+      computedSubtotal = quote.subtotalCents;
+      computedTotal = computedSubtotal + computedTax;
+    }
+
     const updated = await prisma.quotation.update({
       where: { id: quoteId },
       data: {
         ...(doctorId !== undefined ? { doctorId: doctorId || null } : {}),
         ...(lineItems !== undefined ? { lineItems } : {}),
-        ...(subtotalCents !== undefined ? { subtotalCents } : {}),
-        ...(taxCents !== undefined ? { taxCents } : {}),
-        ...(totalCents !== undefined ? { totalCents } : {}),
+        ...(computedSubtotal !== undefined ? { subtotalCents: computedSubtotal } : {}),
+        ...(computedTax !== undefined ? { taxCents: computedTax } : {}),
+        ...(computedTotal !== undefined ? { totalCents: computedTotal } : {}),
         ...(currency !== undefined ? { currency } : {}),
         ...(validUntil !== undefined
           ? { validUntil: validUntil ? new Date(validUntil) : null }
@@ -429,11 +457,12 @@ export async function sendHospitalQuote(req, res, next) {
         data: { status: 'RESPONDED' },
       });
 
-      // 3. Advance case stage if currently QUOTE_REQUESTED
+      // 3. The case moves to QUOTE_SENT only when a hospital sends its first quote (via enforceStageTransition)
       if (quote.enquiry.case.stage === 'QUOTE_REQUESTED') {
+        const nextStage = enforceStageTransition(quote.enquiry.case.stage, 'QUOTE_SENT');
         await tx.medicalCase.update({
           where: { id: quote.enquiry.caseId },
-          data: { stage: 'QUOTE_SENT' },
+          data: { stage: nextStage },
         });
       }
 
@@ -638,11 +667,13 @@ export async function acceptPatientQuote(req, res, next) {
         data: { status: 'ACCEPTED' },
       });
 
-      // 2. Advance case stage to CONSULTATION if currently QUOTE_SENT
+      // 2. Advance case stage to CONSULTATION only if currently QUOTE_SENT (via enforceStageTransition)
+      // A patient accepting a quote never moves the case backwards or sideways.
       if (quote.enquiry.case.stage === 'QUOTE_SENT') {
+        const nextStage = enforceStageTransition(quote.enquiry.case.stage, 'CONSULTATION');
         await tx.medicalCase.update({
           where: { id: quote.enquiry.caseId },
-          data: { stage: 'CONSULTATION' },
+          data: { stage: nextStage },
         });
       }
 

@@ -92,6 +92,7 @@ export const lineItemSchema = z.object({
       'IMPLANT',
       'ACCOMMODATION',
       'TRANSPORT',
+      'AFTERCARE',
       'OTHER',
     ])
     .default('PROCEDURE'),
@@ -121,93 +122,38 @@ export const paymentScheduleSchema = z.object({
 
 /**
  * Create quotation schema
- * Validates financial integrity:
- * - sum(lineItems.amountCents) === subtotalCents
- * - subtotalCents + taxCents === totalCents
+ * Note: Server authoritatively computes subtotalCents and totalCents from lineItems.
  */
-export const createQuotationSchema = z
-  .object({
-    doctorId: z.string().uuid().optional().nullable(),
-    lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required'),
-    subtotalCents: z.number().int().min(0, 'Subtotal must be non-negative integer cents'),
-    taxCents: z.number().int().min(0, 'Tax must be non-negative integer cents').default(0),
-    totalCents: z.number().int().min(0, 'Total must be non-negative integer cents'),
-    currency: z.string().length(3).default('USD'),
-    validUntil: z.string().datetime().or(z.date()).optional().nullable(),
-    paymentSchedule: paymentScheduleSchema.optional().nullable(),
-    cancellationTerms: z.string().max(3000).optional().nullable(),
-    notes: z.string().max(4000).optional().nullable(),
-    status: z.enum(['DRAFT', 'SENT']).default('DRAFT'),
-  })
-  .refine(
-    (data) => {
-      const calculatedSubtotal = data.lineItems.reduce(
-        (sum, item) => sum + item.amountCents,
-        0
-      );
-      return calculatedSubtotal === data.subtotalCents;
-    },
-    {
-      message: 'Subtotal must equal the exact sum of line items amounts in cents',
-      path: ['subtotalCents'],
-    }
-  )
-  .refine(
-    (data) => data.subtotalCents + data.taxCents === data.totalCents,
-    {
-      message: 'Total must equal subtotalCents + taxCents',
-      path: ['totalCents'],
-    }
-  );
+export const createQuotationSchema = z.object({
+  doctorId: z.string().uuid().optional().nullable(),
+  lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required'),
+  subtotalCents: z.number().int().min(0, 'Subtotal must be non-negative integer cents').optional(),
+  taxCents: z.number().int().min(0, 'Tax must be non-negative integer cents').default(0),
+  totalCents: z.number().int().min(0, 'Total must be non-negative integer cents').optional(),
+  currency: z.string().length(3).default('USD'),
+  validUntil: z.string().datetime().or(z.date()).optional().nullable(),
+  paymentSchedule: paymentScheduleSchema.optional().nullable(),
+  cancellationTerms: z.string().max(3000).optional().nullable(),
+  notes: z.string().max(4000).optional().nullable(),
+  status: z.enum(['DRAFT', 'SENT']).default('DRAFT'),
+});
 
 /**
  * Update quotation schema
+ * Note: Server authoritatively computes subtotalCents and totalCents from lineItems if updated.
  */
-export const updateQuotationSchema = z
-  .object({
-    doctorId: z.string().uuid().optional().nullable(),
-    lineItems: z.array(lineItemSchema).min(1).optional(),
-    subtotalCents: z.number().int().min(0).optional(),
-    taxCents: z.number().int().min(0).optional(),
-    totalCents: z.number().int().min(0).optional(),
-    currency: z.string().length(3).optional(),
-    validUntil: z.string().datetime().or(z.date()).optional().nullable(),
-    paymentSchedule: paymentScheduleSchema.optional().nullable(),
-    cancellationTerms: z.string().max(3000).optional().nullable(),
-    notes: z.string().max(4000).optional().nullable(),
-  })
-  .refine(
-    (data) => {
-      if (data.lineItems && data.subtotalCents !== undefined) {
-        const calculatedSubtotal = data.lineItems.reduce(
-          (sum, item) => sum + item.amountCents,
-          0
-        );
-        return calculatedSubtotal === data.subtotalCents;
-      }
-      return true;
-    },
-    {
-      message: 'Subtotal must equal the exact sum of line items amounts in cents',
-      path: ['subtotalCents'],
-    }
-  )
-  .refine(
-    (data) => {
-      if (
-        data.subtotalCents !== undefined &&
-        data.taxCents !== undefined &&
-        data.totalCents !== undefined
-      ) {
-        return data.subtotalCents + data.taxCents === data.totalCents;
-      }
-      return true;
-    },
-    {
-      message: 'Total must equal subtotalCents + taxCents',
-      path: ['totalCents'],
-    }
-  );
+export const updateQuotationSchema = z.object({
+  doctorId: z.string().uuid().optional().nullable(),
+  lineItems: z.array(lineItemSchema).min(1).optional(),
+  subtotalCents: z.number().int().min(0).optional(),
+  taxCents: z.number().int().min(0).optional(),
+  totalCents: z.number().int().min(0).optional(),
+  currency: z.string().length(3).optional(),
+  validUntil: z.string().datetime().or(z.date()).optional().nullable(),
+  paymentSchedule: paymentScheduleSchema.optional().nullable(),
+  cancellationTerms: z.string().max(3000).optional().nullable(),
+  notes: z.string().max(4000).optional().nullable(),
+});
 
 /**
  * Reject quotation schema
