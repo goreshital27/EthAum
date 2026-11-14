@@ -380,7 +380,7 @@ export default function PatientDashboard() {
                     </h2>
                   </div>
                   <span className="text-2xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
-                    Deposit Protected
+                    Deposit Recorded (Demo)
                   </span>
                 </div>
 

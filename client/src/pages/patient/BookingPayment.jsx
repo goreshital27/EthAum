@@ -219,7 +219,7 @@ export default function BookingPayment() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-2xs text-slate-500 pt-2 border-t border-slate-100">
             <div className="flex items-center space-x-2">
               <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>Full deposit protection until formal intake</span>
+              <span>Simulated deposit recorded for scheduling</span>
             </div>
             <div className="flex items-center space-x-2">
               <Lock className="h-4 w-4 text-teal-600 shrink-0" />

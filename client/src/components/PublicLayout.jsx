@@ -269,8 +269,11 @@ export default function PublicLayout() {
           </div>
 
           <div className="pt-6 border-t border-slate-200 space-y-2 text-center text-[11px] text-slate-500">
+            <p className="font-semibold text-rose-600">
+              In a medical emergency, contact your local emergency services.
+            </p>
             <p className="font-medium text-slate-600">
-              EthAum is a care-coordination service. It is not an emergency or medical service. In an emergency, contact your local emergency services.
+              EthAum is a care-coordination platform. It is not an emergency or medical service.
             </p>
             <p className="text-slate-400">
               AI-assisted coordination, not medical advice &bull; &copy; {new Date().getFullYear()} EthAum Global. All rights reserved.

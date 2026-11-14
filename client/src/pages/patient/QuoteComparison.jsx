@@ -638,7 +638,11 @@ export default function QuoteComparison() {
                             >
                               <PhoneCall className="h-3.5 w-3.5" />
                               <span>
-                                {isCallRequested ? 'Call Requested' : 'Request Exploratory Call'}
+                                {requestCallMutation.isLoading && requestCallMutation.variables === hospital.id
+                                  ? 'Requesting Call...'
+                                  : isCallRequested
+                                  ? 'Call Requested'
+                                  : 'Request Exploratory Call'}
                               </span>
                             </button>
                           )}

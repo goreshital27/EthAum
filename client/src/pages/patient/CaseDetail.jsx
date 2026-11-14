@@ -107,8 +107,10 @@ export default function CaseDetail() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries(['caseDetail', caseId]);
+      queryClient.invalidateQueries(['patientCases']);
+      refetch();
       setHospitalToGrant('');
-      setConsentNotice(`Access successfully granted to ${data.hospital?.name}.`);
+      setConsentNotice(`Access successfully granted to ${data?.hospital?.name || 'hospital'}.`);
       setTimeout(() => setConsentNotice(''), 4000);
     },
     onError: (err) => {
@@ -124,6 +126,8 @@ export default function CaseDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['caseDetail', caseId]);
+      queryClient.invalidateQueries(['patientCases']);
+      refetch();
       setConsentNotice('Access revoked successfully.');
       setTimeout(() => setConsentNotice(''), 4000);
     },
@@ -546,7 +550,11 @@ export default function CaseDetail() {
                             className="inline-flex items-center space-x-1 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 shadow-sm transition-colors disabled:opacity-50"
                           >
                             <CalendarCheck className="h-3.5 w-3.5" />
-                            <span>Accept Slot</span>
+                            <span>
+                              {acceptApptMutation.isLoading && acceptApptMutation.variables === appt.id
+                                ? 'Accepting...'
+                                : 'Accept Slot'}
+                            </span>
                           </button>
                           <button
                             type="button"
@@ -555,7 +563,11 @@ export default function CaseDetail() {
                             className="inline-flex items-center space-x-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-300 transition-colors disabled:opacity-50"
                           >
                             <XCircle className="h-3.5 w-3.5" />
-                            <span>Decline</span>
+                            <span>
+                              {declineApptMutation.isLoading && declineApptMutation.variables === appt.id
+                                ? 'Declining...'
+                                : 'Decline'}
+                            </span>
                           </button>
                         </div>
                       )}
@@ -769,9 +781,11 @@ export default function CaseDetail() {
                                 completed: true,
                               })
                             }
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-700 text-white hover:bg-teal-800 transition-colors shadow-2xs"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-700 text-white hover:bg-teal-800 disabled:opacity-50 transition-colors shadow-2xs"
                           >
-                            Mark Done
+                            {toggleTaskMutation.isLoading && toggleTaskMutation.variables?.taskId === task.id
+                              ? 'Updating...'
+                              : 'Mark Done'}
                           </button>
                         )}
                       </div>
@@ -1221,10 +1235,14 @@ export default function CaseDetail() {
                           type="button"
                           disabled={revokeConsentMutation.isLoading}
                           onClick={() => revokeConsentMutation.mutate(consent.id)}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors self-start sm:self-auto"
+                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors self-start sm:self-auto disabled:opacity-50"
                         >
                           <Lock className="h-3.5 w-3.5" />
-                          <span>Revoke Access</span>
+                          <span>
+                            {revokeConsentMutation.isLoading && revokeConsentMutation.variables === consent.id
+                              ? 'Revoking...'
+                              : 'Revoke Access'}
+                          </span>
                         </button>
                       ) : (
                         <span className="text-xs text-slate-400 italic">No access</span>
@@ -1262,7 +1280,7 @@ export default function CaseDetail() {
                 className="inline-flex items-center justify-center space-x-1 px-4 py-2 rounded-lg text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 disabled:opacity-50 transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Grant Consent</span>
+                <span>{grantConsentMutation.isLoading ? 'Granting...' : 'Grant Consent'}</span>
               </button>
             </div>
           </div>

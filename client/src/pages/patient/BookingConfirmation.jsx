@@ -170,7 +170,7 @@ export default function BookingConfirmation() {
               <div className="flex justify-between text-emerald-800 font-bold">
                 <span className="flex items-center space-x-1">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>20% Deposit Paid (Secured):</span>
+                  <span>20% Deposit Recorded (Demo):</span>
                 </span>
                 <span>{formatCentsToUSD(depositPaid)}</span>
               </div>
