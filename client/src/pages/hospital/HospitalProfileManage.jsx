@@ -124,7 +124,9 @@ export default function HospitalProfileManage() {
       <div className="p-8 bg-white rounded-2xl border border-slate-200 text-center space-y-3">
         <AlertTriangle className="h-8 w-8 text-rose-600 mx-auto" />
         <p className="text-sm font-bold text-slate-900">Failed to load profile</p>
-        <p className="text-xs text-slate-500">{error?.message}</p>
+        <p className="text-xs text-slate-500">
+          {error?.response?.data?.message || error?.message || 'Unable to retrieve hospital profile. Please try again.'}
+        </p>
         <button
           type="button"
           onClick={() => refetch()}

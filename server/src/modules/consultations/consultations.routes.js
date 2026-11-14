@@ -20,13 +20,7 @@ router.use(requireAuth);
 // GET /api/appointments - List appointments for authenticated hospital or patient
 router.get('/', validate({ query: listAppointmentsQuerySchema }), getAppointments);
 
-// POST /api/appointments or /api/appointments/propose - Hospital proposes appointment
-router.post(
-  '/',
-  requireRole('HOSPITAL'),
-  validate({ body: proposeAppointmentSchema }),
-  proposeAppointment
-);
+// POST /api/appointments/propose - Hospital proposes appointment
 router.post(
   '/propose',
   requireRole('HOSPITAL'),

@@ -216,6 +216,19 @@ export default function HospitalDoctors() {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2" />
             <p>Loading specialist doctors...</p>
           </div>
+        ) : isError ? (
+          <div className="p-8 text-center text-xs text-rose-600 space-y-2">
+            <p>
+              Failed to load doctors: {error?.response?.data?.message || error?.message || 'Unable to load specialist doctors.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="px-4 py-1.5 bg-rose-50 text-rose-700 rounded-lg font-semibold"
+            >
+              Retry
+            </button>
+          </div>
         ) : doctors.length === 0 ? (
           <div className="py-16 text-center space-y-3 px-4">
             <Users className="h-10 w-10 text-slate-300 mx-auto" />

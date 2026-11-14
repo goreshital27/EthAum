@@ -50,8 +50,8 @@ export default function AdminLayout() {
               </span>
             </div>
 
-            {/* AI Disclaimer (visible on md+) */}
-            <div className="hidden lg:block">
+            {/* AI Disclaimer (visible on sm+) */}
+            <div className="hidden sm:block">
               <AIDisclaimer />
             </div>
 

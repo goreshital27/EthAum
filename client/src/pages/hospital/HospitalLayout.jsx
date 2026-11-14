@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import NotificationBell from '../../components/NotificationBell';
+import AIDisclaimer from '../../components/AIDisclaimer';
 import {
   Building2,
   LayoutDashboard,
@@ -60,9 +61,8 @@ export default function HospitalLayout() {
             </div>
 
             {/* Center: Mandatory AI Coordination Disclaimer */}
-            <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200">
-              <Sparkles className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-              <span>AI-assisted coordination, not medical advice</span>
+            <div className="hidden sm:flex">
+              <AIDisclaimer />
             </div>
 
             {/* Right: Notification Bell & Hospital Identity & Logout & Mobile Toggle */}
@@ -139,9 +139,8 @@ export default function HospitalLayout() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-4 space-y-2 shadow-lg">
             {/* Mobile AI Disclaimer */}
-            <div className="p-2.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 text-xs flex items-center space-x-2 mb-3">
-              <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-              <span className="font-medium">AI-assisted coordination, not medical advice</span>
+            <div className="flex justify-center mb-3">
+              <AIDisclaimer className="w-full justify-center" />
             </div>
 
             <div className="space-y-1">

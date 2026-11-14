@@ -136,7 +136,9 @@ export default function Treatments() {
           <p className="text-sm font-medium text-slate-800">
             Failed to load treatments catalog.
           </p>
-          <p className="text-xs text-slate-500">{error?.message}</p>
+          <p className="text-xs text-slate-500">
+            {error?.response?.data?.message || error?.message || 'Unable to connect to treatments catalog. Please try again.'}
+          </p>
           <button
             onClick={() => refetch()}
             className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"

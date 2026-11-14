@@ -118,7 +118,9 @@ export default function AdminUsers() {
         <div className="bg-white p-8 rounded-2xl border border-rose-200 text-center space-y-3 shadow-xs">
           <AlertCircle className="h-8 w-8 text-rose-500 mx-auto" />
           <p className="text-sm font-bold text-slate-900">Failed to load user directory</p>
-          <p className="text-xs text-slate-500">{error?.message}</p>
+          <p className="text-xs text-slate-500">
+            {error?.response?.data?.message || error?.message || 'Unable to retrieve user directory. Please try again.'}
+          </p>
           <button
             type="button"
             onClick={() => refetch()}

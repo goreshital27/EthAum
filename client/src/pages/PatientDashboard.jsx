@@ -26,12 +26,15 @@ import {
   ChevronDown,
   ChevronRight,
   Gift,
+  Menu,
+  X,
 } from 'lucide-react';
 
 export default function PatientDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showPastCases, setShowPastCases] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Fetch patient cases
   const {
@@ -95,7 +98,7 @@ export default function PatientDashboard() {
 
           <div className="flex items-center space-x-3">
             <NotificationBell />
-            <AIDisclaimer className="hidden md:inline-flex" />
+            <AIDisclaimer className="hidden sm:inline-flex" />
 
             <div className="text-right hidden sm:block pl-2 border-l border-slate-200">
               <p className="text-xs font-bold text-slate-900">{user?.name || user?.email}</p>
@@ -104,14 +107,67 @@ export default function PatientDashboard() {
 
             <button
               onClick={handleLogout}
-              className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+              className="hidden sm:inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
               title="Sign Out"
             >
               <LogOut className="h-3.5 w-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Log out</span>
+              <span>Log out</span>
+            </button>
+
+            {/* Mobile menu button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="sm:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Drawer */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-4 space-y-3 shadow-lg">
+            <div className="pb-2 border-b border-slate-100">
+              <AIDisclaimer className="w-full justify-center" />
+              <div className="mt-2 text-xs text-slate-600">
+                Signed in as: <strong className="text-slate-900">{user?.name || user?.email}</strong>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Link
+                to="/patient/cases/new"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-bold bg-teal-50 text-teal-800"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create New Medical Case</span>
+              </Link>
+              <Link
+                to="/patient/referrals"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                <Gift className="h-4 w-4 text-teal-600" />
+                <span>Referral Program (5% Commission)</span>
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleLogout();
+              }}
+              className="w-full flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Log out</span>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
@@ -163,7 +219,9 @@ export default function PatientDashboard() {
           <div className="bg-white p-8 rounded-xl border border-rose-200 text-center space-y-3">
             <AlertCircle className="h-8 w-8 text-rose-500 mx-auto" />
             <p className="text-sm font-semibold text-slate-800">Failed to load patient dashboard</p>
-            <p className="text-xs text-slate-500">{error?.message}</p>
+            <p className="text-xs text-slate-500">
+              {error?.response?.data?.message || error?.message || 'Unable to retrieve your medical cases. Please try again.'}
+            </p>
             <button
               onClick={() => refetch()}
               className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"

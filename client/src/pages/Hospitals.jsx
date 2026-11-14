@@ -419,7 +419,9 @@ export default function Hospitals() {
               <p className="text-sm font-semibold text-slate-800">
                 Failed to load hospitals directory.
               </p>
-              <p className="text-xs text-slate-500">{error?.message}</p>
+              <p className="text-xs text-slate-500">
+                {error?.response?.data?.message || error?.message || 'Unable to retrieve hospitals. Please try again.'}
+              </p>
               <button
                 type="button"
                 onClick={() => refetch()}

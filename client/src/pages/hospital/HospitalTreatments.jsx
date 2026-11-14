@@ -23,6 +23,8 @@ export default function HospitalTreatments() {
     data: profile,
     isLoading: isProfileLoading,
     isError: isProfileError,
+    error: profileError,
+    refetch: refetchProfile,
   } = useQuery({
     queryKey: ['hospitalProfile'],
     queryFn: async () => {
@@ -225,6 +227,19 @@ export default function HospitalTreatments() {
           <div className="py-20 text-center space-y-2 text-xs text-slate-400">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2" />
             <p>Loading offered treatments...</p>
+          </div>
+        ) : isProfileError ? (
+          <div className="p-8 text-center text-xs text-rose-600 space-y-2">
+            <p>
+              Failed to load treatments: {profileError?.response?.data?.message || profileError?.message || 'Unable to retrieve treatment offerings.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetchProfile()}
+              className="px-4 py-1.5 bg-rose-50 text-rose-700 rounded-lg font-semibold"
+            >
+              Retry
+            </button>
           </div>
         ) : offeredTreatments.length === 0 ? (
           <div className="py-16 text-center space-y-3 px-4">

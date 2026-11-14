@@ -109,7 +109,9 @@ export default function HospitalAppointments() {
           </div>
         ) : isError ? (
           <div className="p-8 text-center text-xs text-rose-600 space-y-2">
-            <p>Failed to load appointments: {error?.message}</p>
+            <p>
+              Failed to load appointments: {error?.response?.data?.message || error?.message || 'Unable to connect. Please try again.'}
+            </p>
             <button
               type="button"
               onClick={() => refetch()}
