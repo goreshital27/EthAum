@@ -47,6 +47,9 @@ export default function HospitalLayout() {
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800">
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+        {/* Full-width slim AI Disclaimer strip */}
+        <AIDisclaimer variant="strip" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between">
             {/* Left: Brand + Portal Badge */}
@@ -58,11 +61,6 @@ export default function HospitalLayout() {
               <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 Hospital Portal
               </span>
-            </div>
-
-            {/* Center: Mandatory AI Coordination Disclaimer */}
-            <div className="hidden sm:flex">
-              <AIDisclaimer />
             </div>
 
             {/* Right: Notification Bell & Hospital Identity & Logout & Mobile Toggle */}

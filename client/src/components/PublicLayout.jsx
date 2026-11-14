@@ -29,56 +29,59 @@ export default function PublicLayout() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo & Platform Name */}
-          <Link to="/" className="flex items-center space-x-2">
-            <HeartPulse className="h-7 w-7 text-teal-600" />
-            <span className="text-xl font-bold text-slate-900 tracking-tight">EthAum</span>
-            <span className="text-[11px] bg-teal-50 text-teal-800 font-medium px-2 py-0.5 rounded-full border border-teal-200">
-              Healthcare
-            </span>
-          </Link>
+        {/* Full-width slim AI Disclaimer strip */}
+        <AIDisclaimer variant="strip" />
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center space-x-7">
-            <NavLink to="/treatments" className={navLinkClass}>
-              Treatments
-            </NavLink>
-            <NavLink to="/destinations" className={navLinkClass}>
-              Destinations
-            </NavLink>
-            <NavLink to="/hospitals" className={navLinkClass}>
-              Hospitals
-            </NavLink>
-            <NavLink to="/packages" className={navLinkClass}>
-              Packages
-            </NavLink>
-            <NavLink to="/compare" className={navLinkClass}>
-              <span className="inline-flex items-center space-x-1">
-                <span>Compare</span>
-                {selectedHospitals.length > 0 && (
-                  <span className="px-1.5 py-0.2 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold">
-                    {selectedHospitals.length}
-                  </span>
-                )}
-              </span>
-            </NavLink>
-          </nav>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center">
+            {/* Logo & Platform Name */}
+            <Link to="/" className="flex items-center space-x-2.5 shrink-0 mr-6 lg:mr-8">
+              <HeartPulse className="h-7 w-7 text-teal-600 shrink-0" />
+              <div className="flex flex-col leading-none">
+                <span className="text-xl font-bold text-slate-900 tracking-tight">EthAum</span>
+                <span className="text-[10px] text-teal-700 font-semibold tracking-wide">Healthcare</span>
+              </div>
+            </Link>
+
+            {/* Desktop Nav Links */}
+            <nav className="hidden lg:flex items-center gap-6 lg:gap-8">
+              <NavLink to="/treatments" className={navLinkClass}>
+                Treatments
+              </NavLink>
+              <NavLink to="/destinations" className={navLinkClass}>
+                Destinations
+              </NavLink>
+              <NavLink to="/hospitals" className={navLinkClass}>
+                Hospitals
+              </NavLink>
+              <NavLink to="/packages" className={navLinkClass}>
+                Packages
+              </NavLink>
+              <NavLink to="/compare" className={navLinkClass}>
+                <span className="inline-flex items-center space-x-1">
+                  <span>Compare</span>
+                  {selectedHospitals.length > 0 && (
+                    <span className="px-1.5 py-0.2 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold">
+                      {selectedHospitals.length}
+                    </span>
+                  )}
+                </span>
+              </NavLink>
+            </nav>
+          </div>
 
           {/* Right Header CTAs */}
-          <div className="hidden md:flex items-center space-x-3">
-            <AIDisclaimer className="hidden xl:inline-flex" />
-
+          <div className="hidden lg:flex items-center gap-3">
             {/* ONE Coral Get a Quote button */}
             <Link
               to="/register"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 active:bg-rose-700 shadow-sm transition-colors"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 active:bg-rose-700 shadow-sm transition-colors shrink-0"
             >
               Get a Quote
             </Link>
 
             {user ? (
-              <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
+              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
                 <Link
                   to={dashboardRoute}
                   className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-teal-50 text-teal-800 text-xs font-semibold hover:bg-teal-100 transition-colors"
@@ -95,7 +98,7 @@ export default function PublicLayout() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
+              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
                 <Link
                   to="/login"
                   className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
@@ -118,7 +121,7 @@ export default function PublicLayout() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none"
+            className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none"
             aria-label="Toggle Navigation"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -127,7 +130,7 @@ export default function PublicLayout() {
 
         {/* Mobile Dropdown Nav */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-3">
+          <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-3">
             <div className="flex flex-col space-y-2 pb-3 border-b border-slate-100">
               <Link
                 to="/treatments"

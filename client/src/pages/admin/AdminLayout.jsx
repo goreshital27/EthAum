@@ -37,6 +37,9 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
       {/* Top Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        {/* Full-width slim AI Disclaimer strip */}
+        <AIDisclaimer variant="strip" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between gap-3">
             {/* Logo and Brand */}
@@ -48,11 +51,6 @@ export default function AdminLayout() {
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                 Admin Console
               </span>
-            </div>
-
-            {/* AI Disclaimer (visible on sm+) */}
-            <div className="hidden sm:block">
-              <AIDisclaimer />
             </div>
 
             {/* Desktop Actions */}
