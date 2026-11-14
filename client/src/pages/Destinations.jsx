@@ -34,6 +34,10 @@ export default function Destinations() {
         <p className="text-sm sm:text-base text-slate-600 max-w-3xl">
           Discover accredited international healthcare destinations offering state-of-the-art surgical facilities, dedicated medical visa protocols, and tailored recovery environments.
         </p>
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center space-x-2">
+          <FileText className="h-4 w-4 text-amber-600 shrink-0" />
+          <span>General information only. Check the official government website for current visa rules.</span>
+        </div>
       </div>
 
       {/* Loading Skeletons */}
@@ -119,12 +123,17 @@ export default function Destinations() {
                   )}
 
                   {dest.visaInfo && (
-                    <div className="flex items-start space-x-2 text-slate-600">
-                      <FileText className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-semibold text-slate-700">Visa: </span>
-                        <span>{dest.visaInfo}</span>
+                    <div className="space-y-1.5">
+                      <div className="flex items-start space-x-2 text-slate-600">
+                        <FileText className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-semibold text-slate-700">Visa: </span>
+                          <span>{dest.visaInfo}</span>
+                        </div>
                       </div>
+                      <p className="text-[11px] text-amber-700 bg-amber-50/70 px-2 py-1 rounded border border-amber-200/60 leading-tight">
+                        General information only. Check the official government website for current visa rules.
+                      </p>
                     </div>
                   )}
                 </div>

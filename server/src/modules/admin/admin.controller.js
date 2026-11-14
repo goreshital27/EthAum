@@ -621,7 +621,10 @@ export const getReferrals = async (req, res, next) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
 
-    const where = {};
+    // Filter out lazily generated placeholder rows where referredPatientId is null
+    const where = {
+      referredPatientId: { not: null },
+    };
     if (status && status !== 'ALL') {
       where.status = status;
     }
@@ -660,18 +663,19 @@ export const getReferrals = async (req, res, next) => {
           },
         }),
         prisma.referral.count({ where }),
-        // Total commissions sum
+        // Total commissions sum (excluding placeholder rows)
         prisma.referral.aggregate({
+          where: { referredPatientId: { not: null } },
           _sum: { commissionCents: true },
         }),
-        // Paid commissions sum
+        // Paid commissions sum (excluding placeholder rows)
         prisma.referral.aggregate({
-          where: { status: 'PAID' },
+          where: { referredPatientId: { not: null }, status: 'PAID' },
           _sum: { commissionCents: true },
         }),
-        // Pending commissions sum
+        // Pending commissions sum (excluding placeholder rows)
         prisma.referral.aggregate({
-          where: { status: { notIn: ['PAID', 'VOID'] } },
+          where: { referredPatientId: { not: null }, status: { notIn: ['PAID', 'VOID'] } },
           _sum: { commissionCents: true },
         }),
       ]);
@@ -733,6 +737,8 @@ export const markReferralPaid = async (req, res, next) => {
           commissionCents: true,
           currency: true,
           referrerId: true,
+          referredPatientId: true,
+          bookingId: true,
         },
       });
 
@@ -742,10 +748,33 @@ export const markReferralPaid = async (req, res, next) => {
         throw error;
       }
 
+      // Check 1: Do not allow marking placeholder rows as paid
+      if (!referral.referredPatientId && !referral.bookingId) {
+        const error = new Error('Cannot mark a placeholder referral row as paid');
+        error.statusCode = 400;
+        throw error;
+      }
+
       if (referral.status === 'PAID') {
         const error = new Error('Referral commission has already been marked as paid');
         error.statusCode = 400;
         throw error;
+      }
+
+      // Check 2: Ensure one booking can never produce two paid referrals
+      if (referral.bookingId) {
+        const existingPaid = await tx.referral.findFirst({
+          where: {
+            bookingId: referral.bookingId,
+            status: 'PAID',
+            id: { not: id },
+          },
+        });
+        if (existingPaid) {
+          const error = new Error('Another referral for this booking has already been marked as PAID');
+          error.statusCode = 400;
+          throw error;
+        }
       }
 
       const updated = await tx.referral.update({
@@ -833,8 +862,9 @@ export const getAnalytics = async (req, res, next) => {
       prisma.booking.aggregate({
         _sum: { bookingFeeCents: true },
       }),
-      // 6. Total commissions in cents (0 if no referrals)
+      // 6. Total commissions in cents (0 if no referrals, excluding placeholder rows)
       prisma.referral.aggregate({
+        where: { referredPatientId: { not: null } },
         _sum: { commissionCents: true },
       }),
       // 7. Total cases

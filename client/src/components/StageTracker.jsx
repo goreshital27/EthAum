@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Check, Clock, AlertCircle } from 'lucide-react';
 
 export const STAGE_META = [
@@ -19,6 +19,19 @@ export default function StageTracker({ currentStage }) {
   const activeIndex = currentIndex !== -1 ? currentIndex : 0;
   const isClosed = currentStage === 'CLOSED';
 
+  const containerRef = useRef(null);
+  const activeStepRef = useRef(null);
+
+  useEffect(() => {
+    if (activeStepRef.current && containerRef.current) {
+      activeStepRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [activeIndex]);
+
   return (
     <div className="w-full bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -33,9 +46,19 @@ export default function StageTracker({ currentStage }) {
         </span>
       </div>
 
+      {/* Mobile Swipe Cue */}
+      <div className="flex sm:hidden items-center justify-between text-[11px] text-slate-400 px-1 pt-1">
+        <span>&larr; Swipe to view all 10 stages &rarr;</span>
+        <span className="font-semibold text-teal-700">Step {activeIndex + 1}/10</span>
+      </div>
+
       {/* Responsive Horizontal / Scrollable Pipeline */}
-      <div className="overflow-x-auto pb-2">
-        <ol className="flex items-center min-w-[760px] text-xs font-medium">
+      <div
+        ref={containerRef}
+        className="overflow-x-auto pb-2 scroll-smooth"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <ol className="flex items-center min-w-[760px] text-xs font-medium py-1">
           {STAGE_META.map((stage, idx) => {
             const isCompleted = idx < activeIndex;
             const isCurrent = idx === activeIndex;
@@ -43,6 +66,7 @@ export default function StageTracker({ currentStage }) {
             return (
               <li
                 key={stage.key}
+                ref={isCurrent ? activeStepRef : null}
                 className={`flex-1 relative ${
                   idx !== STAGE_META.length - 1
                     ? 'after:content-[""] after:w-full after:h-0.5 after:bg-slate-200 after:inline-block after:absolute after:top-4 after:left-1/2 after:-z-0'

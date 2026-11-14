@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCompare } from '../context/CompareContext';
 import CompareBar from './CompareBar';
+import AIDisclaimer from './AIDisclaimer';
 import { HeartPulse, Menu, X, LogIn, UserPlus, LogOut, User, Scale } from 'lucide-react';
 
 export default function PublicLayout() {
@@ -66,6 +67,8 @@ export default function PublicLayout() {
 
           {/* Right Header CTAs */}
           <div className="hidden md:flex items-center space-x-3">
+            <AIDisclaimer className="hidden xl:inline-flex" />
+
             {/* ONE Coral Get a Quote button */}
             <Link
               to="/register"
@@ -214,6 +217,10 @@ export default function PublicLayout() {
                   </Link>
                 </div>
               )}
+
+              <div className="pt-2 flex justify-center">
+                <AIDisclaimer />
+              </div>
             </div>
           </div>
         )}

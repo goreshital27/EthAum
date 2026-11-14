@@ -147,21 +147,29 @@ export async function createBooking(req, res, next) {
         });
       }
 
-      // Link or create patient referral if not already linked to this patient
-      if (!ref.referredPatientId) {
-        await prisma.referral.update({
-          where: { id: ref.id },
-          data: { referredPatientId: patientId },
-        });
-      } else if (ref.referredPatientId !== patientId) {
+      // Link or create patient referral if not already linked to this patient.
+      // Keep placeholder rows (referredPatientId: null) intact; create a dedicated secondary referral row.
+      if (ref.referredPatientId !== patientId) {
         const existingForPatient = await prisma.referral.findFirst({
           where: { referrerId: ref.referrerId, referredPatientId: patientId, bookingId: null },
         });
         if (!existingForPatient) {
           const cryptoModule = await import('crypto');
+          let uniqueSecondaryCode = null;
+          for (let attempt = 0; attempt < 5; attempt++) {
+            const candidate = `${cleanRefCode}-${cryptoModule.randomBytes(3).toString('hex').toUpperCase()}`;
+            const exists = await prisma.referral.findUnique({ where: { code: candidate } });
+            if (!exists) {
+              uniqueSecondaryCode = candidate;
+              break;
+            }
+          }
+          if (!uniqueSecondaryCode) {
+            uniqueSecondaryCode = `${cleanRefCode}-${Date.now().toString(36).toUpperCase()}`;
+          }
           await prisma.referral.create({
             data: {
-              code: `${cleanRefCode}-${cryptoModule.randomBytes(3).toString('hex').toUpperCase()}`,
+              code: uniqueSecondaryCode,
               referrerId: ref.referrerId,
               referredPatientId: patientId,
               status: 'PENDING',
@@ -217,7 +225,7 @@ export async function createBooking(req, res, next) {
 
     return res.status(201).json({
       status: 'ok',
-      message: 'Booking created. Please proceed to confirm the 20% escrow deposit.',
+      message: 'Booking created. Please proceed to confirm the 20% deposit (demo).',
       data: newBooking,
     });
   } catch (error) {
@@ -549,28 +557,37 @@ export async function payBookingDeposit(req, res, next) {
 
       // Step D: Referral processing (only if patient was referred)
       let linkedReferral = null;
-      const referral = await tx.referral.findFirst({
-        where: {
-          referredPatientId: patientId,
-          bookingId: null,
-        },
+      // Make sure one booking can never produce two paid referrals
+      const existingBookingRef = await tx.referral.findFirst({
+        where: { bookingId: id },
       });
 
-      if (referral) {
-        // 5% commission on quote total in integer cents, commissionRateBps 500
-        const quoteTotal = confirmedBooking.quotation.totalCents;
-        const commissionCents = Math.round(quoteTotal * 0.05);
-
-        linkedReferral = await tx.referral.update({
-          where: { id: referral.id },
-          data: {
-            bookingId: id,
-            commissionCents,
-            commissionRateBps: 500,
-            status: 'QUALIFIED',
-            currency: booking.currency,
+      if (existingBookingRef) {
+        linkedReferral = existingBookingRef;
+      } else {
+        const referral = await tx.referral.findFirst({
+          where: {
+            referredPatientId: patientId,
+            bookingId: null,
           },
         });
+
+        if (referral) {
+          // 5% commission on quote total in integer cents, commissionRateBps 500
+          const quoteTotal = confirmedBooking.quotation.totalCents;
+          const commissionCents = Math.round(quoteTotal * 0.05);
+
+          linkedReferral = await tx.referral.update({
+            where: { id: referral.id },
+            data: {
+              bookingId: id,
+              commissionCents,
+              commissionRateBps: 500,
+              status: 'QUALIFIED',
+              currency: booking.currency,
+            },
+          });
+        }
       }
 
       // Step E: Notifications (Hospital and Patient)
@@ -579,11 +596,11 @@ export async function payBookingDeposit(req, res, next) {
         await createNotification({
           userId: booking.hospital.ownerId,
           type: 'BOOKING_CONFIRMED',
-          title: 'Booking Confirmed & Deposit Secured',
+          title: 'Booking Confirmed & Deposit Received (Demo)',
           body: `Patient confirmed booking for Case #${booking.caseId.slice(
             0,
             8
-          )}. Deposit of $${(depositAmountCents / 100).toFixed(2)} secured in escrow.`,
+          )}. Deposit of $${(depositAmountCents / 100).toFixed(2)} received (demo).`,
           link: `/hospital/leads`,
         });
       }

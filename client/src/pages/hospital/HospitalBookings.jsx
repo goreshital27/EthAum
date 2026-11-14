@@ -48,7 +48,7 @@ export default function HospitalBookings() {
             <span>Hospital Bookings &amp; Deposits</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Confirmed patient surgical admissions with 20% upfront deposit secured.
+            Confirmed patient surgical admissions with 20% upfront deposit recorded (demo).
           </p>
         </div>
 

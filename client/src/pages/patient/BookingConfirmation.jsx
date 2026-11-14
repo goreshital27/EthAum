@@ -97,13 +97,13 @@ export default function BookingConfirmation() {
 
           <div className="space-y-1">
             <span className="text-xs font-bold text-emerald-700 uppercase tracking-widest">
-              Booking Confirmed &bull; Deposit Secured
+              Booking Confirmed &bull; Deposit Received (Demo)
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Your Medical Journey is Officially Booked!
             </h1>
             <p className="text-xs text-slate-500 max-w-lg mx-auto">
-              Your 20% deposit has been safely secured. Hospital coordinators and specialist physicians
+              Your 20% deposit simulation has been recorded. Hospital coordinators and specialist physicians
               have been notified to prepare your formal admission itinerary.
             </p>
           </div>
