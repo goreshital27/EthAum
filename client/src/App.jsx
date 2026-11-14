@@ -20,6 +20,7 @@ import CaseDetail from './pages/patient/CaseDetail';
 import QuoteComparison from './pages/patient/QuoteComparison';
 import BookingPayment from './pages/patient/BookingPayment';
 import BookingConfirmation from './pages/patient/BookingConfirmation';
+import PatientReferrals from './pages/patient/PatientReferrals';
 import HospitalLayout from './pages/hospital/HospitalLayout';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
 import HospitalLeads from './pages/hospital/HospitalLeads';
@@ -104,6 +105,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['PATIENT']}>
                 <BookingConfirmation />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/referrals"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <PatientReferrals />
               </ProtectedRoute>
             }
           />

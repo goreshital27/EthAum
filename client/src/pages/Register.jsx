@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { HeartPulse, Building2, User, Loader2, AlertCircle } from 'lucide-react';
+import { HeartPulse, Building2, User, Loader2, AlertCircle, Gift } from 'lucide-react';
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const refFromUrl = searchParams.get('ref') || '';
 
   const [role, setRole] = useState('PATIENT'); // 'PATIENT' | 'HOSPITAL'
   const [formData, setFormData] = useState({
@@ -15,6 +17,7 @@ export default function Register() {
     hospitalName: '',
     country: '',
     city: '',
+    referralCode: refFromUrl,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -50,6 +53,9 @@ export default function Register() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        ...(role === 'PATIENT' && formData.referralCode && {
+          referralCode: formData.referralCode.trim(),
+        }),
         ...(role === 'HOSPITAL' && {
           hospitalName: formData.hospitalName,
           country: formData.country,
@@ -252,6 +258,37 @@ export default function Register() {
                 />
               </div>
             </div>
+
+            {/* Optional Referral Code for Patients */}
+            {role === 'PATIENT' && (
+              <div>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="referralCode" className="block text-sm font-medium text-slate-700">
+                    Referral Code <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  {refFromUrl && (
+                    <span className="inline-flex items-center space-x-1 text-2xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <Gift className="h-3 w-3" />
+                      <span>Referred by friend</span>
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1">
+                  <input
+                    id="referralCode"
+                    name="referralCode"
+                    type="text"
+                    value={formData.referralCode}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 uppercase font-mono tracking-wider"
+                    placeholder="e.g. REF-ELENA-500"
+                  />
+                </div>
+                <p className="mt-1 text-2xs text-slate-400">
+                  Have a friend who recommended EthAum? Enter their code above.
+                </p>
+              </div>
+            )}
 
             <div className="pt-2">
               <button

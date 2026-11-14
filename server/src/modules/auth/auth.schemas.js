@@ -20,6 +20,7 @@ export const registerSchema = z
     hospitalName: z.string().trim().optional(),
     country: z.string().trim().optional(),
     city: z.string().trim().optional(),
+    referralCode: z.string().trim().max(50).optional().nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.role === 'HOSPITAL') {

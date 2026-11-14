@@ -97,13 +97,13 @@ export default function BookingConfirmation() {
 
           <div className="space-y-1">
             <span className="text-xs font-bold text-emerald-700 uppercase tracking-widest">
-              Booking Confirmed &bull; Escrow Secured
+              Booking Confirmed &bull; Deposit Secured
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Your Medical Journey is Officially Booked!
             </h1>
             <p className="text-xs text-slate-500 max-w-lg mx-auto">
-              Your 20% deposit has been safely escrowed. Hospital coordinators and specialist physicians
+              Your 20% deposit has been safely secured. Hospital coordinators and specialist physicians
               have been notified to prepare your formal admission itinerary.
             </p>
           </div>
@@ -170,7 +170,7 @@ export default function BookingConfirmation() {
               <div className="flex justify-between text-emerald-800 font-bold">
                 <span className="flex items-center space-x-1">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>20% Deposit Paid (Escrow):</span>
+                  <span>20% Deposit Paid (Secured):</span>
                 </span>
                 <span>{formatCentsToUSD(depositPaid)}</span>
               </div>

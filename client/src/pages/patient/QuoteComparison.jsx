@@ -838,7 +838,7 @@ export default function QuoteComparison() {
                   </span>
                 </div>
                 <div className="flex justify-between text-teal-800 font-extrabold text-sm pt-2 border-t border-slate-200">
-                  <span>20% Escrow Deposit Required:</span>
+                  <span>20% Deposit Required:</span>
                   <span>
                     {formatCentsToUSD(Math.round(bookingModalQuote.totalCents * 0.2))}
                   </span>
@@ -890,7 +890,7 @@ export default function QuoteComparison() {
                   }
                   className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 disabled:opacity-50 transition-colors shadow-xs"
                 >
-                  {createBookingMutation.isLoading ? 'Reserving...' : 'Proceed to Escrow Deposit'}
+                  {createBookingMutation.isLoading ? 'Reserving...' : 'Proceed to Deposit'}
                 </button>
               </div>
             </div>

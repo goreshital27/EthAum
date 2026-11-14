@@ -123,7 +123,7 @@ export default function BookingPayment() {
         {/* Step Header */}
         <div className="space-y-1">
           <span className="text-xs font-bold text-teal-700 uppercase tracking-widest">
-            Step 10: Escrow Deposit Confirmation
+            Step 10: Deposit Confirmation
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Confirm Booking &amp; Pay Deposit
@@ -142,7 +142,7 @@ export default function BookingPayment() {
             </span>
             <p className="leading-relaxed">
               This is a test simulation sandbox. No credit card or actual payment details are collected.
-              Clicking below immediately locks the booking in escrow and transitions your case stage to <strong>BOOKED</strong>.
+              Clicking below immediately confirms your booking deposit and transitions your case stage to <strong>BOOKED</strong>.
             </p>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function BookingPayment() {
                   Upfront 20% Deposit Due Today
                 </span>
                 <span className="text-2xs text-teal-700">
-                  Computed server-side, held in escrow
+                  Computed server-side deposit
                 </span>
               </div>
               <div className="text-2xl font-black text-slate-900">
@@ -219,7 +219,7 @@ export default function BookingPayment() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-2xs text-slate-500 pt-2 border-t border-slate-100">
             <div className="flex items-center space-x-2">
               <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>Full escrow protection until formal intake</span>
+              <span>Full deposit protection until formal intake</span>
             </div>
             <div className="flex items-center space-x-2">
               <Lock className="h-4 w-4 text-teal-600 shrink-0" />
@@ -236,7 +236,7 @@ export default function BookingPayment() {
               className="w-full inline-flex items-center justify-center space-x-2 py-3.5 px-6 rounded-xl text-sm font-bold text-white bg-teal-700 hover:bg-teal-800 disabled:opacity-50 transition-all shadow-sm cursor-pointer"
             >
               {payMutation.isLoading ? (
-                <span>Processing Escrow Deposit...</span>
+                <span>Processing Deposit...</span>
               ) : (
                 <>
                   <CreditCard className="h-4 w-4" />

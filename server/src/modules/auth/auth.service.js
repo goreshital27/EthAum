@@ -121,7 +121,7 @@ export const registerUser = async (data) => {
   // Execute in ONE database transaction
   const createdUser = await prisma.$transaction(async (tx) => {
     if (role === 'PATIENT') {
-      return await tx.user.create({
+      const newUser = await tx.user.create({
         data: {
           email: cleanEmail,
           passwordHash,
@@ -137,6 +137,36 @@ export const registerUser = async (data) => {
           hospital: true,
         },
       });
+
+      // If optional referralCode was provided, link new user as referredPatientId for that referrer
+      if (data.referralCode && typeof data.referralCode === 'string') {
+        const cleanCode = data.referralCode.trim();
+        const refRecord = await tx.referral.findUnique({
+          where: { code: cleanCode },
+        });
+
+        // Unknown codes are ignored with no error leak. A user cannot refer themselves.
+        if (refRecord && refRecord.referrerId !== newUser.id) {
+          if (!refRecord.referredPatientId) {
+            await tx.referral.update({
+              where: { id: refRecord.id },
+              data: { referredPatientId: newUser.id },
+            });
+          } else {
+            const cryptoModule = await import('crypto');
+            await tx.referral.create({
+              data: {
+                code: `${cleanCode}-${cryptoModule.randomBytes(3).toString('hex')}`,
+                referrerId: refRecord.referrerId,
+                referredPatientId: newUser.id,
+                status: 'PENDING',
+              },
+            });
+          }
+        }
+      }
+
+      return newUser;
     }
 
     if (role === 'HOSPITAL') {

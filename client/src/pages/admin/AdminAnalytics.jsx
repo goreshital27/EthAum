@@ -123,7 +123,7 @@ export default function AdminAnalytics() {
                 <p className="text-3xl font-black text-slate-900">
                   {formatCentsToUSD(stats.totalBookingValueCents)}
                 </p>
-                <p className="text-[11px] text-slate-400">Escrow deposit volume</p>
+                <p className="text-[11px] text-slate-400">Secured deposit volume</p>
               </div>
               <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
                 <DollarSign className="h-6 w-6" />

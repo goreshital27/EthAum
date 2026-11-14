@@ -25,6 +25,7 @@ import {
   User,
   ChevronDown,
   ChevronRight,
+  Gift,
 } from 'lucide-react';
 
 export default function PatientDashboard() {
@@ -126,13 +127,23 @@ export default function PatientDashboard() {
             </p>
           </div>
 
-          <Link
-            to="/patient/cases/new"
-            className="inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 shadow-sm transition-colors self-start sm:self-auto"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Create New Case</span>
-          </Link>
+          <div className="flex items-center space-x-3 self-start sm:self-auto">
+            <Link
+              to="/patient/referrals"
+              className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200 hover:bg-teal-100 shadow-2xs transition-colors"
+            >
+              <Gift className="h-4 w-4 text-teal-600" />
+              <span>Referral Program (5%)</span>
+            </Link>
+
+            <Link
+              to="/patient/cases/new"
+              className="inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 shadow-sm transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create New Case</span>
+            </Link>
+          </div>
         </div>
 
         {/* Loading State */}
@@ -311,7 +322,7 @@ export default function PatientDashboard() {
                     </h2>
                   </div>
                   <span className="text-2xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
-                    Escrow Protected
+                    Deposit Protected
                   </span>
                 </div>
 

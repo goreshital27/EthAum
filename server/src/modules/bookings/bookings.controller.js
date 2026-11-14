@@ -115,18 +115,61 @@ export async function createBooking(req, res, next) {
     // 20% deposit in integer cents rounded
     const depositCents = Math.round(quotation.totalCents * 0.2);
 
-    // 9. If referralCode provided, check if it exists
+    // 9. If referralCode provided, check if it exists and validate against self-referral
     if (referralCode) {
+      const cleanRefCode = referralCode.trim();
       const ref = await prisma.referral.findUnique({
-        where: { code: referralCode.trim() },
+        where: { code: cleanRefCode },
       });
 
-      if (ref && !ref.bookingId && ref.referrerId !== patientId) {
-        // Tag referral to this patient if not already claimed
+      if (!ref) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Invalid referral code: code does not exist',
+        });
+      }
+
+      if (ref.referrerId === patientId) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Self-referral is not permitted: you cannot use your own referral code',
+        });
+      }
+
+      const referrerUser = await prisma.user.findUnique({
+        where: { id: ref.referrerId },
+      });
+
+      if (!referrerUser) {
+        return res.status(400).json({
+          status: 'fail',
+          message: 'Invalid referral code: referrer account does not exist',
+        });
+      }
+
+      // Link or create patient referral if not already linked to this patient
+      if (!ref.referredPatientId) {
         await prisma.referral.update({
           where: { id: ref.id },
           data: { referredPatientId: patientId },
         });
+      } else if (ref.referredPatientId !== patientId) {
+        const existingForPatient = await prisma.referral.findFirst({
+          where: { referrerId: ref.referrerId, referredPatientId: patientId, bookingId: null },
+        });
+        if (!existingForPatient) {
+          const cryptoModule = await import('crypto');
+          await prisma.referral.create({
+            data: {
+              code: `${cleanRefCode}-${cryptoModule.randomBytes(3).toString('hex').toUpperCase()}`,
+              referrerId: ref.referrerId,
+              referredPatientId: patientId,
+              status: 'PENDING',
+              commissionRateBps: 500,
+              currency: 'USD',
+            },
+          });
+        }
       }
     }
 
@@ -440,24 +483,45 @@ export async function payBookingDeposit(req, res, next) {
 
     // 3. ONE SINGLE ATOMIC DATABASE TRANSACTION
     const result = await prisma.$transaction(async (tx) => {
-      // Re-verify booking inside transaction for strict concurrency safety
-      const lockedBooking = await tx.booking.findUnique({
-        where: { id },
-        include: { case: true, quotation: true },
+      // Race-safe atomic transition: updateMany ensures exactly one caller transitions PENDING_PAYMENT -> CONFIRMED
+      const updateResult = await tx.booking.updateMany({
+        where: { id, status: 'PENDING_PAYMENT' },
+        data: { status: 'CONFIRMED' },
       });
 
-      if (lockedBooking.status === 'CONFIRMED') {
+      if (updateResult.count === 0) {
+        // Abort the rest of the transaction so concurrent calls cannot create duplicate payments or referrals
+        const existingBooking = await tx.booking.findUnique({
+          where: { id },
+          include: {
+            hospital: true,
+            case: true,
+            quotation: true,
+            payments: true,
+            referral: true,
+          },
+        });
         const existingPayment = await tx.payment.findFirst({
           where: { bookingId: id, status: 'PAID' },
         });
         return {
-          booking: lockedBooking,
+          booking: existingBooking,
           payment: existingPayment,
           idempotent: true,
         };
       }
 
-      // Step A: Create Payment record with status PAID
+      // Step A: Load the confirmed booking record with relations
+      const confirmedBooking = await tx.booking.findUnique({
+        where: { id },
+        include: {
+          hospital: true,
+          case: true,
+          quotation: true,
+        },
+      });
+
+      // Step B: Create Payment record with status PAID
       const payment = await tx.payment.create({
         data: {
           bookingId: id,
@@ -469,21 +533,8 @@ export async function payBookingDeposit(req, res, next) {
         },
       });
 
-      // Step B: Update Booking status to CONFIRMED
-      const confirmedBooking = await tx.booking.update({
-        where: { id },
-        data: {
-          status: 'CONFIRMED',
-        },
-        include: {
-          hospital: true,
-          case: true,
-          quotation: true,
-        },
-      });
-
       // Step C: Update Case stage to BOOKED via enforceStageTransition (sequential)
-      let stage = lockedBooking.case.stage;
+      let stage = confirmedBooking.case.stage;
       if (stage === 'QUOTE_SENT') {
         stage = enforceStageTransition(stage, 'CONSULTATION');
       }
@@ -492,7 +543,7 @@ export async function payBookingDeposit(req, res, next) {
       }
 
       await tx.medicalCase.update({
-        where: { id: lockedBooking.caseId },
+        where: { id: confirmedBooking.caseId },
         data: { stage },
       });
 
@@ -507,7 +558,7 @@ export async function payBookingDeposit(req, res, next) {
 
       if (referral) {
         // 5% commission on quote total in integer cents, commissionRateBps 500
-        const quoteTotal = lockedBooking.quotation.totalCents;
+        const quoteTotal = confirmedBooking.quotation.totalCents;
         const commissionCents = Math.round(quoteTotal * 0.05);
 
         linkedReferral = await tx.referral.update({

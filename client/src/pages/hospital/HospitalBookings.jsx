@@ -45,10 +45,10 @@ export default function HospitalBookings() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center space-x-2">
             <CalendarCheck className="h-6 w-6 text-indigo-600" />
-            <span>Hospital Bookings &amp; Escrow</span>
+            <span>Hospital Bookings &amp; Deposits</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Confirmed patient surgical admissions with 20% upfront deposit escrowed.
+            Confirmed patient surgical admissions with 20% upfront deposit secured.
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export default function HospitalBookings() {
             className="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">All Bookings</option>
-            <option value="CONFIRMED">Confirmed &amp; Escrow Paid</option>
+            <option value="CONFIRMED">Confirmed &amp; Deposit Paid</option>
             <option value="PENDING_PAYMENT">Pending Deposit</option>
           </select>
         </div>
@@ -112,7 +112,7 @@ export default function HospitalBookings() {
                           : 'bg-amber-50 text-amber-800 border border-amber-200'
                       }`}
                     >
-                      {isConfirmed ? 'CONFIRMED & DEPOSIT ESCROWED' : 'PENDING DEPOSIT'}
+                      {isConfirmed ? 'CONFIRMED & DEPOSIT PAID' : 'PENDING DEPOSIT'}
                     </span>
                     <span className="text-2xs text-slate-400">
                       Ref #{booking.id.slice(0, 8)}
