@@ -3,11 +3,13 @@ import rateLimit from 'express-rate-limit';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validation.js';
 import { AI_DISCLAIMER } from '../../services/ai.schemas.js';
-import { caseIdParamSchema } from './ai.schemas.js';
+import { caseIdParamSchema, caseIdAndJobIdParamSchema } from './ai.schemas.js';
 import {
   triggerReadiness,
   triggerMatching,
   getCaseSummaries,
+  triggerQuoteComparison,
+  getQuoteComparisonStatus,
 } from './ai.controller.js';
 
 const router = Router();
@@ -52,6 +54,21 @@ router.get(
   '/cases/:caseId/summaries',
   validate({ params: caseIdParamSchema }),
   getCaseSummaries
+);
+
+// POST /api/ai/cases/:caseId/quote-comparison
+router.post(
+  '/cases/:caseId/quote-comparison',
+  aiRateLimiter,
+  validate({ params: caseIdParamSchema }),
+  triggerQuoteComparison
+);
+
+// GET /api/ai/cases/:caseId/quote-comparison/:jobId
+router.get(
+  '/cases/:caseId/quote-comparison/:jobId',
+  validate({ params: caseIdAndJobIdParamSchema }),
+  getQuoteComparisonStatus
 );
 
 export default router;

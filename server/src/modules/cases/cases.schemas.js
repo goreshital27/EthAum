@@ -31,3 +31,15 @@ export const updateStageSchema = z.object({
     'CLOSED',
   ]),
 });
+
+export const shortlistSchema = z.object({
+  hospitalIds: z
+    .array(z.string().uuid('Each hospital ID must be a valid UUID'))
+    .min(2, 'Shortlist must contain at least 2 hospitals')
+    .max(3, 'Shortlist can contain at most 3 hospitals'),
+});
+
+export const hospitalIdParamSchema = z.object({
+  id: z.string().uuid('Case ID must be a valid UUID'),
+  hospitalId: z.string().uuid('Hospital ID must be a valid UUID'),
+});

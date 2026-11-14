@@ -3,6 +3,7 @@ import { generateJSON, getAIProvider } from '../../services/ai.js';
 import {
   readinessOutputSchema,
   providerMatchingOutputSchema,
+  quoteComparisonOutputSchema,
 } from '../../services/ai.schemas.js';
 
 /**
@@ -263,10 +264,105 @@ export async function processMatchingJob(jobId, caseId) {
 }
 
 /**
+ * Process quote comparison asynchronously
+ */
+export async function processQuoteComparisonJob(jobId, caseId) {
+  try {
+    await prisma.aICaseSummary.update({
+      where: { id: jobId },
+      data: { status: 'PROCESSING' },
+    });
+
+    const medicalCase = await prisma.medicalCase.findUnique({
+      where: { id: caseId },
+      include: {
+        patient: {
+          include: {
+            patientProfile: true,
+          },
+        },
+        treatment: true,
+        destination: true,
+      },
+    });
+
+    if (!medicalCase) {
+      throw new Error(`Medical case not found: ${caseId}`);
+    }
+
+    const quotations = await prisma.quotation.findMany({
+      where: {
+        enquiry: { caseId },
+        status: { in: ['SENT', 'ACCEPTED'] },
+      },
+      include: {
+        enquiry: {
+          include: {
+            hospital: {
+              include: {
+                reviews: { select: { rating: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const quotesForAI = quotations.map((q) => {
+      const reviews = q.enquiry?.hospital?.reviews || [];
+      const avgRating =
+        reviews.length > 0
+          ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+          : 4.8;
+      const lineItems = Array.isArray(q.lineItems) ? q.lineItems : [];
+      const categories = lineItems
+        .map((item) => item.category || item.name || 'Treatment')
+        .filter(Boolean);
+
+      return {
+        hospitalName: q.enquiry?.hospital?.name || 'Accredited Hospital',
+        accreditations: q.enquiry?.hospital?.accreditations || [],
+        lineItemCategories: categories,
+        totalCents: q.totalCents,
+        stayDays: medicalCase.treatment?.expectedStayDays || 5,
+        rating: avgRating,
+      };
+    });
+
+    const result = await generateJSON({
+      task: 'quoteComparison',
+      input: {
+        ...extractAllowlistedInput(medicalCase),
+        quotes: quotesForAI,
+      },
+      schema: quoteComparisonOutputSchema,
+    });
+
+    await prisma.aICaseSummary.update({
+      where: { id: jobId },
+      data: {
+        status: 'COMPLETED',
+        outputJson: result,
+        model: getAIProvider(),
+      },
+    });
+  } catch (error) {
+    await prisma.aICaseSummary.update({
+      where: { id: jobId },
+      data: {
+        status: 'FAILED',
+        errorMessage: error.message || 'Quote comparison evaluation failed',
+        model: getAIProvider(),
+      },
+    });
+  }
+}
+
+/**
  * Fetch the latest summary for each AI job type for a given case
  */
 export async function getLatestCaseSummaries(caseId) {
-  const [latestReadiness, latestMatching] = await Promise.all([
+  const [latestReadiness, latestMatching, latestQuoteComparison] = await Promise.all([
     prisma.aICaseSummary.findFirst({
       where: {
         caseId,
@@ -285,11 +381,21 @@ export async function getLatestCaseSummaries(caseId) {
         createdAt: 'desc',
       },
     }),
+    prisma.aICaseSummary.findFirst({
+      where: {
+        caseId,
+        type: 'QUOTE_COMPARISON',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    }),
   ]);
 
   return {
     qualification: latestReadiness,
     providerMatching: latestMatching,
+    quoteComparison: latestQuoteComparison,
   };
 }
 
@@ -299,5 +405,6 @@ export default {
   createQueuedJob,
   processReadinessJob,
   processMatchingJob,
+  processQuoteComparisonJob,
   getLatestCaseSummaries,
 };

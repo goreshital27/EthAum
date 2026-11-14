@@ -226,6 +226,12 @@ export default function CaseDetail() {
             </div>
 
             <div className="flex items-center space-x-2">
+              <Link
+                to={`/patient/cases/${caseId}/quotes`}
+                className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-bold bg-teal-700 text-white hover:bg-teal-800 transition-colors shadow-2xs"
+              >
+                <span>Compare Quotes</span>
+              </Link>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200">
                 Stage: {caseItem.stage}
               </span>

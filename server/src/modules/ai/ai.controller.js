@@ -5,6 +5,7 @@ import {
   createQueuedJob,
   processReadinessJob,
   processMatchingJob,
+  processQuoteComparisonJob,
   getLatestCaseSummaries,
 } from './ai.service.js';
 
@@ -175,8 +176,118 @@ export async function getCaseSummaries(req, res, next) {
   }
 }
 
+/**
+ * POST /api/ai/cases/:caseId/quote-comparison
+ * Trigger AI quote comparison job
+ */
+export async function triggerQuoteComparison(req, res, next) {
+  try {
+    const { caseId } = req.params;
+    const { error, case: medicalCase } = await verifyCaseOwnership(caseId, req.user.id);
+
+    if (error === 'NOT_FOUND') {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Medical case not found',
+      });
+    }
+
+    if (error === 'FORBIDDEN') {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Access denied: You do not own this medical case',
+      });
+    }
+
+    // Cache rule: If case already has a COMPLETED result of QUOTE_COMPARISON created
+    // after the case's updatedAt, return cached output instead of re-running.
+    const cached = await getCachedSummary(medicalCase.id, 'QUOTE_COMPARISON', medicalCase.updatedAt);
+    if (cached) {
+      return res.status(200).json({
+        status: 'success',
+        cached: true,
+        jobId: cached.id,
+        data: cached.outputJson,
+        disclaimer: AI_DISCLAIMER,
+      });
+    }
+
+    // Create a new QUEUED job and start processing asynchronously
+    const job = await createQueuedJob(medicalCase.id, 'QUOTE_COMPARISON');
+
+    // Do NOT await background processing
+    processQuoteComparisonJob(job.id, medicalCase.id).catch(() => {
+      // Background errors are stored on the job record
+    });
+
+    return res.status(202).json({
+      status: 'success',
+      message: 'Quote comparison evaluation queued',
+      jobId: job.id,
+      disclaimer: AI_DISCLAIMER,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * GET /api/ai/cases/:caseId/quote-comparison/:jobId
+ * Poll specific quote comparison job status
+ */
+export async function getQuoteComparisonStatus(req, res, next) {
+  try {
+    const { caseId, jobId } = req.params;
+    const { error, case: medicalCase } = await verifyCaseOwnership(caseId, req.user.id);
+
+    if (error === 'NOT_FOUND') {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Medical case not found',
+      });
+    }
+
+    if (error === 'FORBIDDEN') {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'Access denied: You do not own this medical case',
+      });
+    }
+
+    const job = await prisma.aICaseSummary.findFirst({
+      where: {
+        id: jobId,
+        caseId: medicalCase.id,
+      },
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'AI quote comparison job not found',
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        id: job.id,
+        status: job.status,
+        outputJson: job.outputJson,
+        errorMessage: job.errorMessage,
+        createdAt: job.createdAt,
+      },
+      disclaimer: AI_DISCLAIMER,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export default {
   triggerReadiness,
   triggerMatching,
   getCaseSummaries,
+  triggerQuoteComparison,
+  getQuoteComparisonStatus,
 };

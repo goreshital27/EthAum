@@ -17,10 +17,12 @@ import Register from './pages/Register';
 import PatientDashboard from './pages/PatientDashboard';
 import NewCase from './pages/patient/NewCase';
 import CaseDetail from './pages/patient/CaseDetail';
+import QuoteComparison from './pages/patient/QuoteComparison';
 import HospitalLayout from './pages/hospital/HospitalLayout';
 import HospitalDashboard from './pages/hospital/HospitalDashboard';
 import HospitalLeads from './pages/hospital/HospitalLeads';
 import HospitalLeadDetail from './pages/hospital/HospitalLeadDetail';
+import HospitalAppointments from './pages/hospital/HospitalAppointments';
 import HospitalProfileManage from './pages/hospital/HospitalProfileManage';
 import HospitalTreatments from './pages/hospital/HospitalTreatments';
 import HospitalDoctors from './pages/hospital/HospitalDoctors';
@@ -78,6 +80,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/patient/cases/:id/quotes"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <QuoteComparison />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Protected Hospital Portal Routes */}
           <Route
@@ -91,6 +101,7 @@ export default function App() {
             <Route index element={<HospitalDashboard />} />
             <Route path="leads" element={<HospitalLeads />} />
             <Route path="leads/:enquiryId" element={<HospitalLeadDetail />} />
+            <Route path="appointments" element={<HospitalAppointments />} />
             <Route path="profile" element={<HospitalProfileManage />} />
             <Route path="treatments" element={<HospitalTreatments />} />
             <Route path="doctors" element={<HospitalDoctors />} />

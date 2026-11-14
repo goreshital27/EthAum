@@ -127,3 +127,42 @@ Respond with valid JSON matching this schema:
   ]
 }`;
 }
+
+/**
+ * Quote comparison output schema
+ */
+export const quoteComparisonOutputSchema = z.object({
+  disclaimer: z.string().default(AI_DISCLAIMER),
+  differences: z.array(z.string()).min(1),
+  questionsPerHospital: z.array(
+    z.object({
+      hospitalName: z.string(),
+      questions: z.array(z.string()).min(1),
+    })
+  ),
+});
+
+/**
+ * Generate user prompt for quote comparison
+ */
+export function buildQuoteComparisonUserPrompt(quotes) {
+  return `Compare the following treatment cost quotations for international medical coordination.
+Provide neutral, non-clinical factual differences in itemized pricing, stay length, and accreditations.
+Also generate 2-3 coordination and logistics questions to ask each hospital coordinator.
+DO NOT provide medical advice, diagnosis, or clinical treatment recommendations.
+
+Quotes:
+${JSON.stringify(quotes, null, 2)}
+
+Respond with valid JSON matching this schema:
+{
+  "disclaimer": "AI-assisted coordination, not medical advice",
+  "differences": ["neutral factual difference 1", "neutral factual difference 2"],
+  "questionsPerHospital": [
+    {
+      "hospitalName": "Hospital Name",
+      "questions": ["coordination question 1", "coordination question 2"]
+    }
+  ]
+}`;
+}

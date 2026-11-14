@@ -1,5 +1,6 @@
 import prisma from '../../config/prisma.js';
 import { enforceStageTransition } from '../cases/stagePipeline.js';
+import { createNotification } from '../notifications/notifications.service.js';
 
 /**
  * Helper to get and verify the approved hospital for the current user
@@ -131,6 +132,15 @@ export async function createQuotation(req, res, next) {
             data: { stage: nextStage },
           });
         }
+
+        // Notify patient of new quote
+        await createNotification({
+          userId: enquiry.case.patientId,
+          type: 'QUOTE_SENT',
+          title: 'New Treatment Quotation Received',
+          body: `${hospital.name} issued an itemized treatment quotation for your case.`,
+          link: `/patient/cases/${enquiry.caseId}`,
+        });
       }
 
       return newQuote;
@@ -466,6 +476,15 @@ export async function sendHospitalQuote(req, res, next) {
         });
       }
 
+      // 4. Notify patient
+      await createNotification({
+        userId: quote.enquiry.case.patientId,
+        type: 'QUOTE_SENT',
+        title: 'New Treatment Quotation Received',
+        body: `${hospital.name} issued an itemized treatment quotation for your case.`,
+        link: `/patient/cases/${quote.enquiry.caseId}`,
+      });
+
       return sentQuote;
     });
 
@@ -507,7 +526,7 @@ export async function getPatientQuotes(req, res, next) {
       });
     }
 
-    // Return non-draft quotes
+    // Return non-draft quotes with hospital rating and treatment stay days
     const quotes = await prisma.quotation.findMany({
       where: {
         enquiry: {
@@ -532,6 +551,7 @@ export async function getPatientQuotes(req, res, next) {
         enquiry: {
           select: {
             id: true,
+            caseId: true,
             hospital: {
               select: {
                 id: true,
@@ -541,6 +561,21 @@ export async function getPatientQuotes(req, res, next) {
                 country: true,
                 accreditations: true,
                 languages: true,
+                reviews: {
+                  select: {
+                    rating: true,
+                  },
+                },
+              },
+            },
+            case: {
+              select: {
+                treatment: {
+                  select: {
+                    name: true,
+                    expectedStayDays: true,
+                  },
+                },
               },
             },
           },
@@ -548,9 +583,76 @@ export async function getPatientQuotes(req, res, next) {
       },
     });
 
+    const now = new Date();
+    const formattedQuotes = quotes.map((q) => {
+      const isExpired = Boolean(q.validUntil && new Date(q.validUntil) < now) || q.status === 'EXPIRED';
+      const reviews = q.enquiry?.hospital?.reviews || [];
+      const rating = reviews.length > 0
+        ? Number((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1))
+        : 4.8;
+      const stayDays = q.enquiry?.case?.treatment?.expectedStayDays || 5;
+
+      return {
+        id: q.id,
+        enquiryId: q.enquiryId,
+        doctorId: q.doctorId,
+        status: q.status,
+        lineItems: q.lineItems,
+        subtotalCents: q.subtotalCents,
+        taxCents: q.taxCents,
+        totalCents: q.totalCents,
+        currency: q.currency,
+        validUntil: q.validUntil,
+        paymentSchedule: q.paymentSchedule,
+        cancellationTerms: q.cancellationTerms,
+        notes: q.notes,
+        createdAt: q.createdAt,
+        updatedAt: q.updatedAt,
+        isExpired,
+        doctor: q.doctor,
+        hospital: {
+          id: q.enquiry?.hospital?.id,
+          name: q.enquiry?.hospital?.name,
+          slug: q.enquiry?.hospital?.slug,
+          city: q.enquiry?.hospital?.city,
+          country: q.enquiry?.hospital?.country,
+          accreditations: q.enquiry?.hospital?.accreditations || [],
+          languages: q.enquiry?.hospital?.languages || [],
+          rating,
+        },
+        estimatedStayDays: stayDays,
+        isLowestAllIn: false,
+        isShortestStay: false,
+      };
+    });
+
+    // Compute badges among active SENT non-expired quotes
+    const eligibleForBadges = formattedQuotes.filter(
+      (q) => q.status === 'SENT' && !q.isExpired && typeof q.totalCents === 'number'
+    );
+
+    if (eligibleForBadges.length > 0) {
+      let lowestQuote = eligibleForBadges[0];
+      for (const q of eligibleForBadges) {
+        if (q.totalCents < lowestQuote.totalCents) {
+          lowestQuote = q;
+        }
+      }
+      lowestQuote.isLowestAllIn = true;
+
+      // Shortest stay badge
+      let shortestStayQuote = eligibleForBadges[0];
+      for (const q of eligibleForBadges) {
+        if ((q.estimatedStayDays || 999) < (shortestStayQuote.estimatedStayDays || 999)) {
+          shortestStayQuote = q;
+        }
+      }
+      shortestStayQuote.isShortestStay = true;
+    }
+
     return res.status(200).json({
       status: 'ok',
-      data: quotes,
+      data: formattedQuotes,
     });
   } catch (error) {
     next(error);
@@ -661,21 +763,12 @@ export async function acceptPatientQuote(req, res, next) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Mark quote ACCEPTED
+      // 1. Mark quote ACCEPTED (Note: Accepting a quote does NOT change the case stage;
+      // the case moves to CONSULTATION only when the first EXPLORATORY appointment is accepted)
       const acceptedQuote = await tx.quotation.update({
         where: { id: quoteId },
         data: { status: 'ACCEPTED' },
       });
-
-      // 2. Advance case stage to CONSULTATION only if currently QUOTE_SENT (via enforceStageTransition)
-      // A patient accepting a quote never moves the case backwards or sideways.
-      if (quote.enquiry.case.stage === 'QUOTE_SENT') {
-        const nextStage = enforceStageTransition(quote.enquiry.case.stage, 'CONSULTATION');
-        await tx.medicalCase.update({
-          where: { id: quote.enquiry.caseId },
-          data: { stage: nextStage },
-        });
-      }
 
       return acceptedQuote;
     });

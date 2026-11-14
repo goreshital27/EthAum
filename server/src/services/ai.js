@@ -3,6 +3,7 @@ import {
   allowlistedCaseInputSchema,
   buildReadinessUserPrompt,
   buildMatchingUserPrompt,
+  buildQuoteComparisonUserPrompt,
 } from './ai.schemas.js';
 
 /**
@@ -68,6 +69,18 @@ export function sanitizeAllowlistedInput(rawInput) {
       minPriceCents: h.minPriceCents,
       maxPriceCents: h.maxPriceCents,
       rating: typeof h.rating === 'number' ? h.rating : 4.5,
+    }));
+  }
+
+  // If quotes are provided for quote comparison, sanitize quotes without PHI
+  if (Array.isArray(rawInput?.quotes)) {
+    result.quotes = rawInput.quotes.map((q) => ({
+      hospitalName: q.hospitalName || 'Accredited Hospital',
+      accreditations: Array.isArray(q.accreditations) ? q.accreditations : [],
+      lineItemCategories: Array.isArray(q.lineItemCategories) ? q.lineItemCategories : [],
+      totalCents: typeof q.totalCents === 'number' ? q.totalCents : 0,
+      stayDays: typeof q.stayDays === 'number' ? q.stayDays : 0,
+      rating: typeof q.rating === 'number' ? q.rating : 4.5,
     }));
   }
 
@@ -204,6 +217,48 @@ async function executeMockProvider({ task, input, schema }) {
     return schema.parse({ matches: top5 });
   }
 
+  if (task === 'quoteComparison' || task === 'quote_comparison') {
+    const quotes = Array.isArray(input.quotes) ? input.quotes : [];
+    const differences = [];
+    if (quotes.length >= 2) {
+      const minCost = Math.round(Math.min(...quotes.map((q) => q.totalCents)) / 100);
+      const maxCost = Math.round(Math.max(...quotes.map((q) => q.totalCents)) / 100);
+      differences.push(
+        `All-in quote totals range from $${minCost} to $${maxCost} USD across ${quotes.length} participating hospitals.`
+      );
+      const stayDaysList = quotes.map((q) => q.stayDays).filter((d) => d > 0);
+      if (stayDaysList.length > 0) {
+        differences.push(
+          `Estimated recommended stay ranges between ${Math.min(...stayDaysList)} and ${Math.max(...stayDaysList)} days for in-country recovery.`
+        );
+      }
+      differences.push(
+        'Inclusions differ: some hospitals bundle airport transfer, translation services, and post-discharge telehealth follow-ups directly in the package price, while others list them as optional ancillary fees.'
+      );
+    } else if (quotes.length === 1) {
+      differences.push(`Initial quotation received from ${quotes[0].hospitalName || 'the hospital'}.`);
+    } else {
+      differences.push('No formal hospital quotes have been submitted for comparison yet.');
+    }
+
+    const questionsPerHospital = (quotes.length > 0 ? quotes : [{ hospitalName: 'Accredited Hospital' }]).map((q) => ({
+      hospitalName: q.hospitalName,
+      questions: [
+        'Does the itemized total include pre-operative lab work and mandatory clearance imaging?',
+        'Are private recovery room upgrades and dedicated companion accommodation covered in this quote?',
+        'What is the deposit requirement and cancellation refund schedule if flight schedules change?',
+      ],
+    }));
+
+    const mockOutput = {
+      disclaimer: 'AI-assisted coordination, not medical advice',
+      differences,
+      questionsPerHospital,
+    };
+
+    return schema.parse(mockOutput);
+  }
+
   throw new Error(`Unsupported AI task: ${task}`);
 }
 
@@ -221,6 +276,8 @@ async function executeGeminiProvider({ task, input, schema, signal }) {
     prompt = buildReadinessUserPrompt(input);
   } else if (task === 'matching' || task === 'provider_matching') {
     prompt = buildMatchingUserPrompt(input, input.candidateHospitals || []);
+  } else if (task === 'quoteComparison' || task === 'quote_comparison') {
+    prompt = buildQuoteComparisonUserPrompt(input.quotes || []);
   } else {
     throw new Error(`Unsupported AI task: ${task}`);
   }
@@ -268,6 +325,8 @@ async function executeClaudeProvider({ task, input, schema, signal }) {
     prompt = buildReadinessUserPrompt(input);
   } else if (task === 'matching' || task === 'provider_matching') {
     prompt = buildMatchingUserPrompt(input, input.candidateHospitals || []);
+  } else if (task === 'quoteComparison' || task === 'quote_comparison') {
+    prompt = buildQuoteComparisonUserPrompt(input.quotes || []);
   } else {
     throw new Error(`Unsupported AI task: ${task}`);
   }

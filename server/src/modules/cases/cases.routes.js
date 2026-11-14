@@ -10,7 +10,15 @@ import {
   createCaseSchema,
   caseIdParamSchema,
   updateStageSchema,
+  shortlistSchema,
+  hospitalIdParamSchema,
 } from './cases.schemas.js';
+import {
+  setShortlist,
+  getShortlist,
+  deleteShortlist,
+  requestExploratoryCall,
+} from './shortlist.controller.js';
 import {
   uploadCaseDocument,
   grantCaseConsent,
@@ -99,6 +107,38 @@ router.get(
   requireRole('PATIENT'),
   validate({ params: caseIdParamSchema }),
   getPatientQuotes
+);
+
+// POST /api/cases/:id/shortlist (Set 2-3 shortlisted hospitals)
+router.post(
+  '/:id/shortlist',
+  requireRole('PATIENT'),
+  validate({ params: caseIdParamSchema, body: shortlistSchema }),
+  setShortlist
+);
+
+// GET /api/cases/:id/shortlist (Get shortlisted hospitals)
+router.get(
+  '/:id/shortlist',
+  requireRole('PATIENT'),
+  validate({ params: caseIdParamSchema }),
+  getShortlist
+);
+
+// DELETE /api/cases/:id/shortlist (Clear or remove from shortlist)
+router.delete(
+  '/:id/shortlist',
+  requireRole('PATIENT'),
+  validate({ params: caseIdParamSchema }),
+  deleteShortlist
+);
+
+// POST /api/cases/:id/shortlist/:hospitalId/request-call (Request exploratory consultation call)
+router.post(
+  '/:id/shortlist/:hospitalId/request-call',
+  requireRole('PATIENT'),
+  validate({ params: hospitalIdParamSchema }),
+  requestExploratoryCall
 );
 
 export default router;
