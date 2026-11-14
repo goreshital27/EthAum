@@ -76,7 +76,7 @@ cd client; npm run dev
 
 Only configure these variable names in `server/.env` and `client/.env`:
 
-- **Server (`server/.env`)**: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `CLIENT_URL`, `PORT`, `NODE_ENV`, `AI_PROVIDER`, `AI_API_KEY`, `STORAGE_PROVIDER`.
+- **Server (`server/.env`)**: `PORT`, `NODE_ENV`, `CLIENT_URL`, `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `AI_PROVIDER`, `AI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `STORAGE_PROVIDER`, `STORAGE_BUCKET`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, `STORAGE_ENDPOINT`, `STORAGE_LOCAL_DIR`.
 - **Client (`client/.env`)**: `VITE_API_URL`.
 
 ---
@@ -107,3 +107,14 @@ All seed accounts share the password: `Demo@12345`
 4. **Security & QA Verification**:
    - Security Audit: [docs/SECURITY-REVIEW.md](docs/SECURITY-REVIEW.md)
    - Manual QA Runbook: [docs/QA-CHECKLIST.md](docs/QA-CHECKLIST.md)
+
+---
+
+## Known Limitations
+
+- **Simulated Payments & Deposits**: All payments and escrow-like financial flows are simulated deposits only; no actual payment gateway is connected and no real currency is transferred.
+- **Ephemeral Local Storage**: Uploaded medical scans and diagnostic records are stored in local server storage (`uploads/private`) and do not persist across redeployments on ephemeral free cloud hosting.
+- **Hardware Permissions for Tele-Consultation**: Video calls via Jitsi require explicit browser permissions for webcam and microphone, as well as an unrestricted WebRTC connection.
+- **AI Provider Fallback**: AI intake readiness analysis and matching run in mock mode unless `AI_PROVIDER` and valid credentials (`GEMINI_API_KEY` or `ANTHROPIC_API_KEY`) are supplied.
+- **Free Tier Cold Starts**: On free database or hosting tiers (e.g. Neon serverless wake-up), the initial API request after an idle period may take 30–60 seconds to respond.
+- **Simulated Referral Payouts**: The 5% referral commission is calculated, tracked, and stored in the database, but external banking or crypto payout rails are simulated within the portal.

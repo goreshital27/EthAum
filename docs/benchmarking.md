@@ -79,7 +79,7 @@
 
 ## 4. Healthtrip (healthtrip.com)
 
-**What it does:** An India-based medical tourism platform and mobile app connecting international patients with hospitals in India, Turkey, Thailand, Malaysia, Singapore, and the UAE ([Healthtrip Global Destinations](https://www.healthtrip.com)). Serves patients seeking cardiac, orthopaedic, oncology, IVF, cosmetic, and transplant procedures.
+**What it does:** An India-based medical tourism platform and mobile app connecting international patients with hospitals across 7 countries: India, Turkey, Thailand, Malaysia, Singapore, the UAE, and Germany ([Healthtrip Global Destinations](https://www.healthtrip.com)). Serves patients seeking cardiac, orthopaedic, oncology, IVF, cosmetic, and transplant procedures.
 
 **Patient journey:** Patient explores treatments on web or app → uses cost estimator to review package pricing → uploads medical records → AI tool parses reports, case manager routes them to specialists → receives treatment plans and quotes from multiple hospitals → selects a hospital and books → dedicated travel consultant handles visa, flights, transfers, accommodation → local "companion" meets patient at airport → treatment → post-op recovery support → medical summaries transferred for domestic follow-up → patient app for ongoing health tracking.
 
@@ -92,7 +92,7 @@
 
 **Weaknesses to IMPROVE:**
 - AI use is not clearly scoped — no visible disclaimer separating coordination AI from medical advice.
-- Reviews on the platform were not verified against completed bookings on the public site [unverified - confirm before submitting - no source found].
+- Reviews on the platform were not verified against completed bookings on the public site [unverified - confirm before submitting - no public evidence found].
 - Detailed patient record privacy dashboards and granular consent controls were not prominently displayed on public pages.
 - Aftercare coordination relies on the patient proactively using the app.
 
@@ -180,7 +180,7 @@
 |---|---|---|---|---|---|---|---|
 | **Transparent pricing** | ❌ Directory only | ⚠️ Estimates, excludes extras | ❌ Enterprise pivot | ✅ Cost estimator | ❌ Quote on request | ❌ Quote on request | ⚠️ Range estimate |
 | **Verified hospitals** | ⚠️ Lists accreditations | ⚠️ Screens for JCI | ⚠️ Claimed JCI | ⚠️ Lists accreditations | ✅ Own JCI hospitals | ✅ Own JCI/NABH hospitals | ✅ Own JCI hospital |
-| **Quote comparison** | ❌ | ❌ | ❌ | ⚠️ Multiple quotes, no side-by-side tool [unverified - confirm before submitting - no source found] | ❌ Single hospital | ❌ Single hospital | ❌ Single hospital |
+| **Quote comparison** | ❌ | ❌ | ❌ | ⚠️ Multiple quotes, no side-by-side tool [unverified - confirm before submitting - no public evidence found] | ❌ Single hospital | ❌ Single hospital | ❌ Single hospital |
 | **Record privacy** | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified |
 | **Aftercare** | ❌ Left to clinic | ❌ Limited | ❌ Reported gaps | ⚠️ App-based tracking | ✅ Teleconsultation | ✅ Teleconsultation | ✅ Teleconsultation |
 | **Referral programme** | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified |
@@ -230,12 +230,12 @@
 
 1. **PlacidWay Reach (Verified)**: Operates a global network connecting patients with clinics across 60+ countries and 250+ cities with 2,000+ medical centers. Sourced from official site: [PlacidWay](https://www.placidway.com).
 2. **Medigo Founding & Pivot (Verified)**: Founded in November 2013 in Berlin (by Ugur Samut, Pawel Cebula, and Ieva Soblickaite). Pivoted in 2020 to an independent Third-Party Administrator (TPA) and healthcare assistance provider for insurance companies, MGAs, and self-insured employers. Sourced from official site: [Medigo](https://www.medigo.com).
-3. **Healthtrip Geographic Reach (Verified)**: Hospital partner network encompasses India, Turkey, Thailand, UAE, Singapore, Malaysia, and Germany. Sourced from official site: [Healthtrip](https://www.healthtrip.com).
+3. **Healthtrip Geographic Reach (Verified)**: Hospital partner network encompasses 7 countries: India, Turkey, Thailand, UAE, Singapore, Malaysia, and Germany. Sourced from official site: [Healthtrip](https://www.healthtrip.com).
 4. **Apollo Hospitals Reach (Verified)**: International Patient Services has cared for patients from more than 150 countries. Sourced from official site: [Apollo Hospitals International Patient Services](https://www.apollohospitals.com/international-patient-services/).
 5. **Bumrungrad Volume & Interpreter Capacity (Verified)**: Serves over 500,000 international patients annually from more than 190 countries, with 200+ full-time medical interpreters supporting 25+ languages free of charge. Sourced from official site: [Bumrungrad International Hospital](https://www.bumrungrad.com/).
 
-### Unverified Claims (No Source Found)
+### Claims Requiring Verification (No Public Evidence Found)
 
 The following claims could not be corroborated from primary official documentation or audited public registers:
-1. **Healthtrip Verified Reviews Against Completed Bookings**: No public documentation or verification proof was found demonstrating that reviews published on Healthtrip are independently verified against completed medical records or confirmed hospital bookings (`[unverified - confirm before submitting - no source found]`).
-2. **Healthtrip Public Side-by-Side Comparison Matrix Tool**: While Healthtrip coordinators and AI chat assist with comparisons, no public self-service interactive side-by-side quote comparison matrix tool was found on the public website (`[unverified - confirm before submitting - no source found]`).
+1. **Healthtrip Verified Reviews Against Completed Bookings**: No public evidence was found demonstrating that reviews published on Healthtrip are independently audited or verified against completed patient medical records or hospital bookings (`[unverified - confirm before submitting - no public evidence found]`).
+2. **Healthtrip Public Side-by-Side Comparison Matrix Tool**: While Healthtrip coordinators and AI chat assist patients with treatment options and hospital quotes, no public evidence was found of an automated, self-service side-by-side comparison matrix on the public website (`[unverified - confirm before submitting - no public evidence found]`).
