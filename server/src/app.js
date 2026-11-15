@@ -37,20 +37,37 @@ import reviewsRoutes from './modules/reviews/reviews.routes.js';
 
 const app = express();
 
-// Trust first proxy hop in production (e.g., Render, Fly.io, Cloudflare, Nginx)
-if (config.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-}
+// Trust first proxy hop (e.g., Render, Fly.io, Cloudflare, Vercel, Nginx)
+app.set('trust proxy', 1);
 
 // Security headers
 app.use(helmet());
 
 // Cross-Origin Resource Sharing (strip trailing slashes from CLIENT_URL)
 const clientOrigin = config.CLIENT_URL ? config.CLIENT_URL.replace(/\/+$/, '') : config.CLIENT_URL;
+const allowedOrigins = [
+  clientOrigin,
+  'https://eth-aum.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5000',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: clientOrigin,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        (clientOrigin && origin.startsWith(clientOrigin))
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 );
 

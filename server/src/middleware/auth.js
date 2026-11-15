@@ -6,15 +6,29 @@ import prisma from '../config/prisma.js';
  * requireAuth Middleware
  *
  * Rules:
- * - Reads JWT exclusively from httpOnly cookie named "token".
- * - Never reads from Authorization header or localStorage.
+ * - Reads JWT from Authorization: Bearer header first, with httpOnly cookie "token" as fallback.
  * - Verifies JWT signature and expiry.
  * - Loads the full User entity from database with associated profiles.
  * - Returns 401 if missing, invalid, expired, or user not found/inactive.
  */
 export const requireAuth = async (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    let token = null;
+
+    // 1. Read token from Authorization: Bearer header first
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (authHeader && typeof authHeader === 'string') {
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7).trim();
+      } else {
+        token = authHeader.trim();
+      }
+    }
+
+    // 2. Fallback to httpOnly cookie
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
 
     if (!token) {
       return res.status(401).json({

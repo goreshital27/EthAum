@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session on mount via httpOnly cookie check
+  // Restore session on mount via stored token or cookie check
   useEffect(() => {
     let isMounted = true;
 
@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
         }
       } catch (error) {
         if (isMounted) {
+          localStorage.removeItem('token');
           setUser(null);
         }
       } finally {
@@ -38,6 +39,10 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
     const authenticatedUser = response.data.user;
+    const token = response.data.token;
+    if (token) {
+      localStorage.setItem('token', token);
+    }
     setUser(authenticatedUser);
     return authenticatedUser;
   };
@@ -45,6 +50,10 @@ export function AuthProvider({ children }) {
   const register = async (formData) => {
     const response = await api.post('/auth/register', formData);
     const registeredUser = response.data.user;
+    const token = response.data.token;
+    if (token) {
+      localStorage.setItem('token', token);
+    }
     setUser(registeredUser);
     return registeredUser;
   };
@@ -52,7 +61,10 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await api.post('/auth/logout');
+    } catch (err) {
+      // Ignore network errors during logout
     } finally {
+      localStorage.removeItem('token');
       setUser(null);
     }
   };
